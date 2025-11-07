@@ -1,7 +1,7 @@
 import '../../global.css';
 import { View, Text, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Button from '../components/Button';
+import Button from '@/components/Button';
 import { Link, useRouter } from 'expo-router'; 
 
 export default function Home() {

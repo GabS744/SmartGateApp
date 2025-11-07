@@ -31,7 +31,7 @@ const InputField = ({ label, type = 'text', ...props }: InputFieldProps) => {
   }
 
   return (
-    <View className="mb-4 w-full">
+    <View className="mb-4 w-full p-1">
       {label && (
         <Text className="mb-2 text-base font-semibold text-[#131E46] dark:text-gray-300">
           {label}
@@ -40,11 +40,12 @@ const InputField = ({ label, type = 'text', ...props }: InputFieldProps) => {
 
       <TextInput
         className="
-          w-full rounded-lg border-4 border-[#283B7D] bg-white p-4 
+          w-full rounded-lg border-2 border-[#283B7D] bg-white p-4 
           text-base text-black 
           focus:border-[#283B7D] dark:border-gray-600 dark:bg-gray-800
           
           dark:text-white
+          
         "
         placeholderTextColor="#6B84A1"
         {...nativeProps}
