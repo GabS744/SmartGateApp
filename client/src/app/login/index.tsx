@@ -24,9 +24,9 @@ export default function Login() {
 
     try {
       const { token, user } = await login(email, password);
-      router.replace('/menu');
+      router.replace('/user');
     } catch (error) {
-      Alert('Erro ao fazer login. Verifique suas credenciais e tente novamente.');
+      alert('Erro ao fazer login. Verifique suas credenciais e tente novamente.');
     } finally {
       setIsLoading(false);
     }
