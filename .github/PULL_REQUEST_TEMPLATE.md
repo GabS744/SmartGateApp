@@ -8,7 +8,9 @@ Add your description here
 2. In terminal:  
    ```git checkout main```
 
-   ```git checkout origin nome_da_branch```
+   ```git checkout <nome da branch>```
+
+   ```git pull origin <branch name>```
 
    ```pnpm install```
 
