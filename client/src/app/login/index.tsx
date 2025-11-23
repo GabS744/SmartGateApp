@@ -4,9 +4,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import InputField from '@/components/InputField';
 import { Link, useRouter } from 'expo-router';
 import Button from '@/components/Button';
-import LoginShape from '@/components/svgs/LoginShape';
+import Shape from '@/components/svgs/Shape';
 import { useState } from 'react';
 import { login } from '@/services/api';
+import { Mail, Lock } from 'lucide-react-native';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -24,7 +25,7 @@ export default function Login() {
 
     try {
       const { token, user } = await login(email, password);
-      router.replace('/user');
+      router.replace('/menu');
     } catch (error) {
       alert('Erro ao fazer login. Verifique suas credenciais e tente novamente.');
     } finally {
@@ -32,9 +33,13 @@ export default function Login() {
     }
   };
 
+  const iconColor = '#283B7D';
+
   return (
-    <SafeAreaView className="flex-1 items-center bg-[#CBD0F2]">
-      <LoginShape />
+    <SafeAreaView className="flex-1 items-center bg-[#F2F3FB]">
+      <Shape height={240} width='100%'>
+        <Text>teste</Text>
+      </Shape>
       <View className="w-96 items-center">
         <Text className="p-8 text-5xl font-bold">Login</Text>
         <InputField
@@ -43,12 +48,14 @@ export default function Login() {
           value={email}
           onChangeText={setEmail}
           autoCapitalize="none"
+          icon ={<Mail color={iconColor} size={25} />}
         />
         <InputField
           placeholder="Digite sua senha..."
           secureTextEntry={true}
           value={password}
           onChangeText={setPassword}
+          icon ={<Lock color={iconColor} size={25} />}
         />
       </View>
       <View className="w-96 items-end">

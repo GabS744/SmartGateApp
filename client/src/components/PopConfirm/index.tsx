@@ -25,7 +25,7 @@ export function PopupConfirm({
             <TriangleAlert size={42} color="#FFFFFF" />
           </View>
 
-          {/* Texto */}
+
           {title && (
             <Text className="text-white text-lg font-semibold text-center mb-2">
               {title}
@@ -38,7 +38,7 @@ export function PopupConfirm({
             </Text>
           )}
 
-          {/* Botões */}
+
           <View className="flex-row gap-3 w-full">
             <TouchableOpacity
               onPress={onClose}
@@ -55,7 +55,6 @@ export function PopupConfirm({
             </TouchableOpacity>
           </View>
 
-          {/* Ícone de fechar opcional */}
           <TouchableOpacity
             onPress={onClose}
             className="absolute top-3 right-3 p-1"
