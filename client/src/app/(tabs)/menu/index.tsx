@@ -1,7 +1,7 @@
 import '../../../../global.css';
 import { View, Text, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
   User,
   Bell,
@@ -18,6 +18,7 @@ import InfoCard from '@/components/InfoCard';
 
 export default function Menu() {
   const { name } = useLocalSearchParams();
+  const router = useRouter();
   return (
     <View className="flex-1 bg-[#EFF0FB]">
       <View className="h-1/5 w-full bg-[#131E46]">
@@ -51,7 +52,7 @@ export default function Menu() {
             <RoundIconBtn
               icon={UserStar}
               label="Visitante"
-              onPress={() => console.log('Pessoas')}
+              onPress={() => router.push('convidados')}
             />
             <RoundIconBtn icon={Car} label="Veículos" onPress={() => console.log('Veículos')} />
             <RoundIconBtn icon={CalendarDays} label="Eventos" />
