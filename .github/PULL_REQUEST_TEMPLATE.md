@@ -6,7 +6,9 @@ Add your description here
 ## 🧪 How to Test
 1. Clone this repository;
 2. In terminal:  
-   ```git checkout main``
+   ```git checkout main```
+
+   ```git checkout origin nome_da_branch```
 
    ```pnpm install```
 
@@ -14,8 +16,8 @@ Add your description here
 
    ```pnpm expo start --clear```
 
-3. Make sure you are connected with the same wifi as your phone.
-4. Read the QrCode that appeared at the terminal with the expo go app (you have to be logged in there too) and test [your alterations].
+4. Make sure you are connected with the same wifi as your phone.
+5. Read the QrCode that appeared at the terminal with the expo go app (you have to be logged in there too) and test [your alterations].
 
 ## 📸 Evidencies
 Add photos or videos here.
