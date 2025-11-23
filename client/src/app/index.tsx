@@ -14,7 +14,7 @@ export default function Home() {
   };
 
   return (
-    <SafeAreaView className="flex-1 items-center bg-[#CBD0F2]">
+    <SafeAreaView className="flex-1 items-center bg-[#F2F3FB]">
       <View className="items-center pt-16">
         <Text className="font-regular p-1 text-xl">Bem vindo(a) ao</Text>
         <Text className="text-5xl font-bold">Smart Gate</Text>
