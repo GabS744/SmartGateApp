@@ -54,3 +54,21 @@ export const register = (firstName, lastName, dateOfBirth, email, password) => {
     }, 1000);
   });
 };
+
+export const updateUser = (id, newData) => {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      const index = db.users.findIndex((u) => u.id === id);
+      
+      if (index === -1) {
+        reject(new Error('Usuário não encontrado.'));
+        return;
+      }
+
+      db.users[index] = { ...db.users[index], ...newData };
+      
+      console.log('Usuário Atualizado:', db.users[index]);
+      resolve(db.users[index]);
+    }, 1000);
+  });
+};
