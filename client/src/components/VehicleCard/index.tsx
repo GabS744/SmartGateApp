@@ -84,7 +84,7 @@ export default function VehicleCard({
               <Pencil size={18} color="#283B7D" />
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={() => setOpenDelete(true)} className="p-1">
+            <TouchableOpacity onPress={() => setOpenDelete(true)} className="p-1 bg-red-50 rounded-lg">
               <Trash2 size={18} color="#EF4444" />
             </TouchableOpacity>
           </View>

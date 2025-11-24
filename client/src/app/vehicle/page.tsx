@@ -31,7 +31,7 @@ export default function VehiclesPage() {
 
   return (
     <View className="flex-1 bg-white px-4 pt-10">
-      <Text className="text-2xl text-[#131E46] font-bold mb-1">
+      <Text className="text-3xl text-[#131E46] font-bold mb-1">
         Veículos
       </Text>
 
@@ -40,10 +40,10 @@ export default function VehiclesPage() {
       </Text>
 
       <TouchableOpacity
-        className="flex-row items-center bg-[#283B7D] px-4 py-3 rounded-xl mb-5"
+        className="flex-row items-center justify-center bg-[#283B7D] w-[152px] h-[32px] rounded-xl mb-5"
       >
-        <Plus size={18} color="#fff" className="mr-2" />
-        <Text className="text-white font-medium">Adicionar veículo</Text>
+        <Plus size={18} color="#fff" className="mr-2 ml-2" />
+        <Text className="text-white font-medium"> Adicionar veículo</Text>
       </TouchableOpacity>
 
       <ScrollView showsVerticalScrollIndicator={false} className="pb-20">
@@ -51,7 +51,7 @@ export default function VehiclesPage() {
           <VehicleCard
             key={v.id}
             {...v}
-            type={v.type as "car" | "moto"} // 🔥 garante que o tipo está correto
+            type={v.type as "car" | "moto"}
 
             onConfirmDelete={() =>
               setVehicles((old) => old.filter((i) => i.id !== v.id))
@@ -69,7 +69,6 @@ export default function VehiclesPage() {
                         cor: data.cor,
                         nameResponsible: data.proprietario,
                         nameApt: data.apt,
-                        // 🔥 CONVERSÃO FINAL PARA O TYPE CERTO
                         type: data.type === "Carro" ? "car" : "moto",
                       }
                     : i

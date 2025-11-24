@@ -57,7 +57,7 @@ export default function Menu() {
             <RoundIconBtn 
               icon={Car} 
               label="Veículos" 
-              onPress={() =>  router.push('/client/src/app/vehicle/page.tsx')} />
+              onPress={() =>  router.push('/vehicle/page')} />
             <RoundIconBtn icon={CalendarDays} label="Eventos" />
             <RoundIconBtn icon={MessageCircleQuestionMark} label="Suporte" />
           </ScrollView>
