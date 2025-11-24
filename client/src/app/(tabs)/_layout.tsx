@@ -5,9 +5,14 @@ import { Home, HandCoins, Users, User } from 'lucide-react-native';
 
 function TabBarIcon({ icon: Icon, name, color, focused }: any) {
   return (
-    <View className="flex-1 items-center pt-4">
+    <View className="w-full flex-1 items-center pt-4">
       <Icon color={color} size={24} />
-      <Text className="mt-1 text-[9px] font-semibold w-full text-white">{name}</Text>
+      <Text
+        className="mt-1 w-full text-center text-[9px] font-semibold text-white"
+        numberOfLines={1} // Garante que o texto fique em uma linha
+      >
+        {name}
+      </Text>
     </View>
   );
 }
@@ -26,6 +31,8 @@ export default function TabLayout() {
           height: 85,
         },
       }}>
+      {/* --- 4 ÍCONES PRINCIPAIS --- */}
+
       <Tabs.Screen
         name="menu/index"
         options={{
@@ -61,6 +68,15 @@ export default function TabLayout() {
           ),
         }}
       />
+
+      {/* --- TELAS OCULTAS DA BARRA --- */}
+      {/* Isso impede que o Expo crie botões extras para esses arquivos */}
+
+      <Tabs.Screen name="vehicle/page" options={{ href: null }} />
+
+      <Tabs.Screen name="veiculos" options={{ href: null }} />
+
+      <Tabs.Screen name="index" options={{ href: null }} />
     </Tabs>
   );
 }

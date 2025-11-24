@@ -54,7 +54,10 @@ export default function Menu() {
               label="Visitante"
               onPress={() => router.push('convidados')}
             />
-            <RoundIconBtn icon={Car} label="Veículos" onPress={() => console.log('Veículos')} />
+            <RoundIconBtn 
+              icon={Car} 
+              label="Veículos" 
+              onPress={() =>  router.push('/vehicle/page')} />
             <RoundIconBtn icon={CalendarDays} label="Eventos" />
             <RoundIconBtn icon={MessageCircleQuestionMark} label="Suporte" />
           </ScrollView>
