@@ -1,0 +1,19 @@
+spring:
+  application:
+    name: condominio-api
+
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:3306/condominio}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:root}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: none   # IMPORTANTE, Flyway que cria as tabelas
+    show-sql: true
+    properties:
+      hibernate.format_sql: true
+
+  flyway:
+    enabled: true
