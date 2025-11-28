@@ -10,10 +10,18 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: none   # IMPORTANTE, Flyway que cria as tabelas
+      ddl-auto: update
     show-sql: true
     properties:
       hibernate.format_sql: true
+    database-platform: org.hibernate.dialect.MySQLDialect
 
   flyway:
     enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    clean-disabled: true
+
+jwt:
+  secret: uwrFGEOISyTcy368XwaqQKzKiBSQPL333N1V4c/XKTg=
+  expiration: 86400000 # 1 dia
