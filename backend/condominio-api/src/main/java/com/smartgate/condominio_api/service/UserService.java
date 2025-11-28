@@ -6,6 +6,7 @@ import com.smartgate.condominio_api.repository.UserRepository;
 import com.smartgate.condominio_api.request.UserRequest;
 import com.smartgate.condominio_api.response.UserResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -15,9 +16,11 @@ import java.util.List;
 public class UserService {
     private final UserRepository repository;
     private final UserMapper mapper;
+    private final BCryptPasswordEncoder passwordEncoder;
 
     public UserResponse create(UserRequest dto) {
         User user = mapper.toEntity(dto);
+        user.setPasswordHash(passwordEncoder.encode(user.getPasswordHash()));
         return mapper.toUserResponse(repository.save(user));
     }
 
