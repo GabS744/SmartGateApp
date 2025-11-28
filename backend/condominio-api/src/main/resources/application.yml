@@ -23,5 +23,5 @@ spring:
     clean-disabled: true
 
 jwt:
-  secret: uwrFGEOISyTcy368XwaqQKzKiBSQPL333N1V4c/XKTg=
-  expiration: 86400000 # 1 dia
+  secret: cNJMEIglskoeBzYtj53P6c23dCJgUoGdgSpF9oDQdSM=
+  expiration: 86400000
