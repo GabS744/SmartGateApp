@@ -1,8 +1,10 @@
 'use client';
 
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Modal, Alert } from 'react-native';
 import VehicleCard from '@/components/VehicleCard';
-import { Plus } from 'lucide-react-native';
+import { Plus, Check } from 'lucide-react-native';
+import InputField from '@/components/InputField';
+import { Picker } from '@react-native-picker/picker';
 import { useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -30,6 +32,84 @@ export default function VehiclesPage() {
     },
   ]);
 
+  const [openAdd, setOpenAdd] = useState(false);
+  const [addData, setAddData] = useState({
+    type: 'Carro',
+    nameVehicle: '',
+    year: '',
+    placa: '',
+    cor: '',
+    nameResponsible: '',
+    nameApt: '',
+  });
+
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const validateWithFormData = (data: Record<string, any>) => {
+    const errs: Record<string, string> = {};
+    const placaVal = String(data.placa || '').toUpperCase();
+    const placaRegexOld = /^[A-Z]{3}-\d{4}$/;
+    const placaRegexMerc = /^[A-Z]{3}\d[A-Z]\d{2}$/;
+    if (!placaVal || !(placaRegexOld.test(placaVal) || placaRegexMerc.test(placaVal))) {
+      errs.placa = 'Placa inválida (ex: ABC-1234)';
+    }
+
+    const anoVal = Number(data.year);
+    const currentYear = new Date().getFullYear();
+    if (!data.year || Number.isNaN(anoVal) || anoVal < 1900 || anoVal > currentYear + 1) {
+      errs.year = `Ano inválido (entre 1900 e ${currentYear + 1})`;
+    }
+
+    const nonDigitRegex = /^[^\d]+$/;
+    if (!data.cor || !nonDigitRegex.test(String(data.cor))) {
+      errs.cor = 'Cor inválida (não deve conter números)';
+    }
+
+    if (!data.nameResponsible || !nonDigitRegex.test(String(data.nameResponsible))) {
+      errs.nameResponsible = 'Nome do responsável inválido';
+    }
+
+    if (!data.nameVehicle || String(data.nameVehicle).trim().length === 0) {
+      errs.nameVehicle = 'Nome do veículo é obrigatório';
+    }
+
+    if (!data.nameApt || String(data.nameApt).trim().length === 0) {
+      errs.nameApt = 'Apartamento é obrigatório';
+    }
+
+    if (!data.type || (data.type !== 'Carro' && data.type !== 'Moto')) {
+      errs.type = 'Tipo inválido';
+    }
+
+    return errs;
+  };
+
+  const handleRegister = () => {
+    const validation = validateWithFormData(addData);
+    setErrors(validation);
+    if (Object.keys(validation).length > 0) {
+      const first = Object.values(validation)[0];
+      Alert.alert('Erro no formulário', first);
+      return;
+    }
+
+    const newVehicle = {
+      id: String(Date.now()),
+      nameVehicle: addData.nameVehicle,
+      year: Number(addData.year),
+      placa: addData.placa.toUpperCase(),
+      cor: addData.cor,
+      nameResponsible: addData.nameResponsible,
+      nameApt: addData.nameApt,
+      type: addData.type === 'Carro' ? 'car' : 'moto',
+    };
+
+    setVehicles((old) => [newVehicle, ...old]);
+    setOpenAdd(false);
+    setAddData({ type: 'Carro', nameVehicle: '', year: '', placa: '', cor: '', nameResponsible: '', nameApt: '' });
+    setErrors({});
+  };
+
   return (
     <SafeAreaView className="flex-1 p-2 bg-white">
 
@@ -38,7 +118,7 @@ export default function VehiclesPage() {
 
         <Text className="mb-4 text-blue-400">Total: {vehicles.length}</Text>
 
-        <TouchableOpacity className="mb-5 h-[32px] w-[152px] flex-row items-center justify-center self-start rounded-xl bg-[#283B7D]">
+        <TouchableOpacity className="mb-5 h-[40px] w-[176px] flex-row items-center justify-center self-start rounded-xl bg-[#283B7D]" onPress={() => setOpenAdd(true)}>
           <Plus size={18} color="#fff" className="ml-2 mr-2" />
           <Text className="font-medium text-white"> Adicionar veículo</Text>
         </TouchableOpacity>
@@ -75,6 +155,65 @@ export default function VehiclesPage() {
           ))}
         </ScrollView>
       </View>
+
+      {/* ADD VEHICLE MODAL */}
+      <Modal visible={openAdd} animationType="slide" transparent>
+        <View className="flex-1 bg-black/40 justify-center items-center p-4">
+          <View className="bg-white w-full rounded-xl max-h-[87%] p-4">
+            <View className="flex-row justify-between items-center mb-4">
+              <Text className="text-lg font-bold text-[#131E46]">Cadastrar Veículo</Text>
+              <TouchableOpacity onPress={() => setOpenAdd(false)}>
+                <Text className="text-[#313E4D] font-bold">Fechar</Text>
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false}>
+              <View className="mb-4">
+                <Text className="text-gray-600 text-sm mb-1">Tipo de Veículo</Text>
+                <View className="border border-gray-300 rounded-lg">
+                  <Picker
+                    selectedValue={addData.type}
+                    onValueChange={(value) => setAddData((old) => ({ ...old, type: String(value) }))}
+                  >
+                    <Picker.Item label="Carro" value="Carro" />
+                    <Picker.Item label="Moto" value="Moto" />
+                  </Picker>
+                </View>
+                {errors.type && <Text className="text-red-500 text-xs mt-1">{errors.type}</Text>}
+              </View>
+
+              <InputField label="Nome do Veículo" value={addData.nameVehicle} onChangeText={(t) => setAddData((old) => ({ ...old, nameVehicle: t }))} />
+              {errors.nameVehicle && <Text className="text-red-500 text-xs">{errors.nameVehicle}</Text>}
+
+              <InputField label="Ano" type="number" value={addData.year} onChangeText={(t) => setAddData((old) => ({ ...old, year: t }))} />
+              {errors.year && <Text className="text-red-500 text-xs">{errors.year}</Text>}
+
+              <InputField label="Placa" value={addData.placa} onChangeText={(t) => setAddData((old) => ({ ...old, placa: t }))} />
+              {errors.placa && <Text className="text-red-500 text-xs">{errors.placa}</Text>}
+
+              <InputField label="Cor" value={addData.cor} onChangeText={(t) => setAddData((old) => ({ ...old, cor: t }))} />
+              {errors.cor && <Text className="text-red-500 text-xs">{errors.cor}</Text>}
+
+              <InputField label="Nome do responsável" value={addData.nameResponsible} onChangeText={(t) => setAddData((old) => ({ ...old, nameResponsible: t }))} />
+              {errors.nameResponsible && <Text className="text-red-500 text-xs">{errors.nameResponsible}</Text>}
+
+              <InputField label="Apartamento" value={addData.nameApt} onChangeText={(t) => setAddData((old) => ({ ...old, nameApt: t }))} />
+              {errors.nameApt && <Text className="text-red-500 text-xs">{errors.nameApt}</Text>}
+
+              <View className="flex-row justify-between mt-6">
+                <TouchableOpacity onPress={() => setOpenAdd(false)} className="px-4 py-3 rounded-lg bg-gray-200">
+                  <Text>Cancelar</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity onPress={handleRegister} className="px-4 py-3 rounded-lg bg-[#283B7D] flex-row items-center">
+                  <Check size={18} color="#fff" className="mr-2" />
+                  <Text className="text-white font-medium">Registrar Veículo</Text>
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
