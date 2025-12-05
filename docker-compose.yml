@@ -1,0 +1,29 @@
+services:
+  mysql-local:
+    image: mysql:8.0
+    container_name: mysql-local
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: condominio
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  api:
+    build:
+      context: ./server/condominio-api
+    container_name: condominio-api
+    restart: always
+    depends_on:
+      - mysql-local
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-local:3306/condominio?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+    ports:
+      - "8080:8080"
+
+volumes:
+  mysql_data:
