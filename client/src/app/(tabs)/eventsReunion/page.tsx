@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
 import { View, Text, ScrollView, TouchableOpacity, Dimensions } from "react-native";
+import { useRouter } from 'expo-router';
 import { ChevronLeft, ChevronRight } from 'lucide-react-native';
 import EventModal from "@/components/EventModal";
 import CalendarPicker from 'react-native-calendar-picker';
@@ -15,7 +16,14 @@ type EventType = {
 };
 
 export default function EventsPage() {
-  const [selectedDate, setSelectedDate] = useState(new Date("2025-12-01"));
+
+  function parseLocalDate(dateString: string) {
+    const [y, m, d] = dateString.split("-").map(Number);
+    return new Date(y, m - 1, d);
+  }
+
+  const router = useRouter();
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const calendarRef = useRef<any>(null);
   const [selectedEvent, setSelectedEvent] = useState<EventType | null>(null);
   const [openModal, setOpenModal] = useState(false);
@@ -29,8 +37,7 @@ export default function EventsPage() {
         fullDate: "Segunda-feira, 01 de dezembro de 2025",
         location: "Salão de Festas - Bloco A",
         createdBy: "Síndico João Silva",
-        description:
-          "Reunião para discussão sobre novas regras de multas do condomínio.",
+        description: "Reunião para discussão sobre novas regras de multas do condomínio.",
       },
     ],
     "2025-12-02": [
@@ -46,39 +53,72 @@ export default function EventsPage() {
     ],
   };
 
-  const dateKey = selectedDate.toISOString().split("T")[0];
+  const dateKey = selectedDate ? selectedDate.toISOString().split("T")[0] : "";
+  const events = dateKey ? eventsByDay[dateKey] || [] : [];
+
   const eventDateStrings = Object.keys(eventsByDay);
-  const customDatesStyles = eventDateStrings.map((d) => ({
-    date: new Date(d),
-    // For small dot effect, we set the day container thin border bottom
+
+  const customDatesStyles = eventDateStrings.map((d) => {
+  const date = parseLocalDate(d);
+
+  const isSelected =
+    selectedDate &&
+    date.toDateString() === selectedDate.toDateString();
+
+  const isToday = new Date().toDateString() === date.toDateString();
+
+  if (isSelected) {
+    // mantém azul do calendarPicker
+    return {
+      date,
+      containerStyle: {},
+      textStyle: {},
+    };
+  }
+
+  if (isToday) {
+    // dia de hoje: deixa o círculo branco mas texto escuro
+    return {
+      date,
+      containerStyle: {
+        backgroundColor: "#FFFFFF",
+      },
+      textStyle: {
+        color: "#1E3070",
+        fontWeight: "600",
+      },
+    };
+  }
+
+  // dias com evento → roxo
+  return {
+    date,
     containerStyle: {
-      alignItems: 'center',
-      justifyContent: 'center',
-      paddingBottom: 4,
-      // small line/dot at the bottom
-      borderBottomWidth: 6,
-      borderBottomColor: '#E7D0FF',
-      width: 6,
-      borderRadius: 4,
+      backgroundColor: "#7C3AED",
+      borderRadius: 20, // garante que seja círculo perfeito
+      padding: 5,       // mantém o padding interno
     },
-    style: { backgroundColor: 'transparent' },
-    textStyle: { color: '#131E46' },
-  }));
-  const events = eventsByDay[dateKey] || [];
+    textStyle: {
+      color: "#fff",
+      fontWeight: "600",
+    },
+  };
+});
+
 
   return (
     <ScrollView className="flex-1 p-2 bg-white" contentContainerStyle={{ paddingBottom: 140 }}>
+      {/* Header */}
       <View className="mb-2 w-full flex-row items-center justify-between">
         <View className="flex-row items-center justify-between w-full px-4">
-
           <View className="items-center">
             <TouchableOpacity
-              onPress={() => calendarRef.current?.handleOnPressPrevious()}
+              onPress={() => router.push('/')}
               className="p-2 ml-1"
             >
-              <ChevronLeft size={18} color="#FFFFFF" />
+              {/* Aqui você pode colocar um ícone de voltar */}
             </TouchableOpacity>
-            <Text className="text-lg font-bold text-[#283B7D]">Reuniões</Text>
+            <Text className="mb-1 text-3xl font-bold text-[#283B7D]">Reuniões</Text>
           </View>
 
           <View className="flex-row items-center">
@@ -86,23 +126,24 @@ export default function EventsPage() {
               onPress={() => calendarRef.current?.handleOnPressNext()}
               className="p-2 mr-1"
             >
-              <ChevronRight size={18} color="#FFFFFF" />
+              {/* Ícone de próximo */}
             </TouchableOpacity>
             <View style={{ width: 8 }} />
           </View>
         </View>
       </View>
 
+      {/* Calendar */}
       <View className="mx-4 mt-4 bg-white rounded-xl p-3 shadow">
         <CalendarPicker
           ref={calendarRef}
           selectedStartDate={selectedDate}
           onDateChange={(date: any) => setSelectedDate(date)}
           onMonthChange={(date: any) => setSelectedDate(date)}
-          selectedDayColor="#1E3070"
+          selectedDayColor="#1E3070"           // azul do dia selecionado
           selectedDayTextColor="#ffffff"
-          todayBackgroundColor="#EFF0FB"
-          customDatesStyles={customDatesStyles}
+          todayBackgroundColor="#FFFFFF"
+          customDatesStyles={customDatesStyles} // círculos roxos nos dias com evento
           scaleFactor={375}
           width={Dimensions.get('window').width - 32}
           previousComponent={<ChevronLeft size={16} color="#283B7D" />}
@@ -114,9 +155,10 @@ export default function EventsPage() {
         />
       </View>
 
+      {/* Agenda do dia */}
       <View className="px-6 mt-6">
         <Text className="text-lg font-bold mb-4">
-          {events[0]?.fullDate || "Nenhum evento para este dia"}
+          {selectedDate && events.length > 0 ? events[0].fullDate : "Nenhum evento para este dia"}
         </Text>
 
         {events.map((ev: EventType) => (

@@ -113,13 +113,16 @@ export default function Menu() {
               icon={Car} 
               label="Veículos" 
               onPress={() =>  router.push('/vehicle/page')} />
-              <RoundIconBtn icon={CalendarDays} label="Eventos" onPress={() =>  router.push('/events')}/>
+            <RoundIconBtn 
+              icon={CalendarDays} 
+              label="Eventos" 
+              onPress={() =>  router.push('/eventsReunion/page')}/>
             <RoundIconBtn icon={MessageCircleQuestionMark} label="Suporte" />
           </ScrollView>
         </View>
         
 
-        <InfoCard icon={Calendar} title="Eventos Próximos" route="/events">
+        <InfoCard icon={Calendar} title="Eventos Próximos">
             {fakeEvents.slice(0, 3).map((ev) => (
               <TouchableOpacity
                 key={ev.id}
