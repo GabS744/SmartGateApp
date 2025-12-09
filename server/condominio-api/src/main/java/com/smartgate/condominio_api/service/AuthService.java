@@ -1,6 +1,7 @@
 package com.smartgate.condominio_api.service;
 
 import com.smartgate.condominio_api.domain.User;
+import com.smartgate.condominio_api.exception.InvalidCredentialsException;
 import com.smartgate.condominio_api.repository.UserRepository;
 import com.smartgate.condominio_api.request.LoginRequest;
 import lombok.RequiredArgsConstructor;
@@ -17,11 +18,11 @@ public class AuthService {
 
     public String login(LoginRequest loginRequest) {
         User user = userRepository.findByEmail(loginRequest.getEmail())
-                .orElseThrow(() -> new RuntimeException("Invalid credentials"));
+                .orElseThrow(InvalidCredentialsException::new);
 
 
         if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPasswordHash())) {
-            throw new RuntimeException("Invalid credentials");
+            throw new InvalidCredentialsException();
         }
 
 

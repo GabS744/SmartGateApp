@@ -12,8 +12,4 @@
 ## Como rodar o back-end (explicação provisória)
 ```cd server ```
 
-```npm install```
-
-```docker-compose up```
-
-```npm migration```
+```docker compose up -d```
