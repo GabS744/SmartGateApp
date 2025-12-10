@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -22,8 +23,6 @@ public class AuthService {
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder passwordEncoder;
     private final JwtService jwtService;
-
-    // --- NOVAS DEPENDÊNCIAS ---
     private final ConfirmationTokenRepository confirmationTokenRepository;
     private final EmailService emailService;
 
@@ -35,7 +34,6 @@ public class AuthService {
             throw new InvalidCredentialsException();
         }
 
-        // Se o usuário não clicou no e-mail, ele não pode entrar
         if (!user.isEnabled()) {
             throw new IllegalStateException("Conta não ativada. Por favor, verifique seu e-mail.");
         }
@@ -43,15 +41,25 @@ public class AuthService {
         return jwtService.generateToken(user);
     }
 
-    @Transactional // Importante para garantir que usuário e token sejam salvos juntos
+    @Transactional
     public void register(RegisterRequest registerRequest) {
 
         if (!registerRequest.getPassword().equals(registerRequest.getConfirmPassword())) {
             throw new IllegalArgumentException("As senhas não coincidem");
         }
 
-        if (userRepository.findByEmail(registerRequest.getEmail()).isPresent()) {
-            throw new IllegalArgumentException("Email já registrado");
+        Optional<User> userOptional = userRepository.findByEmail(registerRequest.getEmail());
+
+        if (userOptional.isPresent()) {
+
+            User existingUser = userOptional.get();
+
+            if (existingUser.isEnabled()) {
+                throw new IllegalArgumentException("Email já registrado");
+            }
+
+            generateAndSendToken(existingUser, registerRequest.getFirstName());
+            return;
         }
 
         var user = User.builder()
@@ -60,38 +68,40 @@ public class AuthService {
                 .birthDate(registerRequest.getBirthDate())
                 .passwordHash(passwordEncoder.encode(registerRequest.getPassword()))
                 .role("USER")
-                .enabled(false) //O usuário nasce bloqueado
+                .enabled(false)
                 .build();
 
         userRepository.save(user);
 
-        // 1. Gerar Token UUID
+        generateAndSendToken(user, registerRequest.getFirstName());
+    }
+
+    private void generateAndSendToken(User user, String firstName) {
         String tokenUuid = UUID.randomUUID().toString();
 
-        ConfirmationToken token = new ConfirmationToken(
-                tokenUuid,
-                LocalDateTime.now(),
-                LocalDateTime.now().plusMinutes(15), // Expira em 15 min
-                user
-        );
+        ConfirmationToken token = confirmationTokenRepository.findByUser(user)
+                .orElse(new ConfirmationToken());
+
+        token.setToken(tokenUuid);
+        token.setCreatedAt(LocalDateTime.now());
+        token.setExpiresAt(LocalDateTime.now().plusMinutes(15));
+        token.setUser(user);
 
         confirmationTokenRepository.save(token);
 
-        // 2. Montar Link e Email HTML
         String link = "http://localhost:8080/v1/auth/confirm?token=" + tokenUuid;
 
         String emailHtml = """
-                <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #ddd;">
-                    <h2 style="color: #2c3e50;">Bem-vindo ao SmartGate!</h2>
-                    <p>Olá, %s.</p>
-                    <p>Clique no botão abaixo para ativar sua conta:</p>
-                    <a href="%s" style="background-color: #3498db; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Ativar Conta</a>
-                </div>
-                """.formatted(registerRequest.getFirstName(), link);
+            <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #ddd;">
+                <h2 style="color: #2c3e50;">Bem-vindo ao SmartGate!</h2>
+                <p>Olá, %s.</p>
+                <p>Clique no botão abaixo para ativar sua conta:</p>
+                <a href="%s" style="background-color: #3498db; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Ativar Conta</a>
+                <p style="font-size: 12px; color: #888;">Este link é válido por 15 minutos.</p>
+            </div>
+            """.formatted(firstName, link);
 
-        // 3. Enviar E-mail
-        emailService.send(registerRequest.getEmail(), emailHtml);
-
+        emailService.send(user.getEmail(), emailHtml);
     }
 
     @Transactional
@@ -112,9 +122,9 @@ public class AuthService {
         confirmationToken.setConfirmedAt(LocalDateTime.now());
 
         User user = confirmationToken.getUser();
-        user.setEnabled(true); // <--- AQUI O USUÁRIO É ATIVADO
+        user.setEnabled(true);
         userRepository.save(user);
 
-        return "Conta confirmada com sucesso! Agora você pode fazer login.";
+        return "Conta confirmada com sucesso!";
     }
 }

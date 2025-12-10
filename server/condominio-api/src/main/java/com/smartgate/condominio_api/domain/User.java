@@ -40,7 +40,7 @@ public class User implements UserDetails {
     private LocalDate birthDate;
 
     @Column(nullable = false)
-    private Boolean enabled = true;
+    private Boolean enabled;
 
     @Column(name = "created_at", updatable = false, insertable = false)
     private LocalDateTime createdAt;
@@ -78,6 +78,6 @@ public class User implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return true;
+        return this.enabled;
     }
 }

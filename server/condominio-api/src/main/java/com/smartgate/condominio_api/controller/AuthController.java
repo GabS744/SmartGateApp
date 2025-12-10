@@ -22,7 +22,7 @@ public class AuthController {
         return ResponseEntity.ok(Map.of("token", token));
     }
 
-    @PostMapping("registration")
+    @PostMapping("register")
     public ResponseEntity<String> registration(@RequestBody @Valid RegisterRequest request) {
         authService.register(request);
         return ResponseEntity.ok("Cadastro realizado! Verifique seu e-mail.");
