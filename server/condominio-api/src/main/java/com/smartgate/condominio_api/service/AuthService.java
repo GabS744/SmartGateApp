@@ -65,7 +65,7 @@ public class AuthService {
         var user = User.builder()
                 .fullName(registerRequest.getFirstName() + " " + registerRequest.getLastName())
                 .email(registerRequest.getEmail())
-                .birthDate(registerRequest.getBirthDate())
+                .dateOfBirth(registerRequest.getDateOfBirth())
                 .passwordHash(passwordEncoder.encode(registerRequest.getPassword()))
                 .role("USER")
                 .enabled(false)

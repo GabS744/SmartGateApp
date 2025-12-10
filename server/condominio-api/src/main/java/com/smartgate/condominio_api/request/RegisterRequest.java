@@ -30,6 +30,6 @@ public class RegisterRequest {
     private String lastName;
 
     @NotNull(message = "A data de nascimento é obrigatória")
-    private LocalDate birthDate;
+    private LocalDate dateOfBirth;
 
 }

@@ -16,7 +16,7 @@ import java.util.Collections;
 import java.util.UUID;
 
 @Entity
-@Table(name = "Users")
+@Table(name = "`Users`")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -39,8 +39,8 @@ public class User implements UserDetails {
     @Column(nullable = false, length = 50)
     private String role;
 
-    @Column(name = "birth_date", nullable = false)
-    private LocalDate birthDate;
+//    @Column(name = "birth_date", nullable = false)
+//    private LocalDate birthDate;
 
     @Column(nullable = false)
     private Boolean enabled;
