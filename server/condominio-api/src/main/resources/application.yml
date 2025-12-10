@@ -2,35 +2,6 @@ spring:
   application:
     name: condominio-api
 
-  datasource:
-    url: ${DB_URL:jdbc:mysql://localhost:3306/condominio}
-    username: ${DB_USERNAME:root}
-    password: ${DB_PASSWORD:root}
-    driver-class-name: com.mysql.cj.jdbc.Driver
-
-  jpa:
-    hibernate:
-      ddl-auto: none  # ← MUDEI AQUI! Deixe o Flyway gerenciar tudo
-      naming:
-        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
-    show-sql: true
-    properties:
-      hibernate:
-        format_sql: true
-
-  flyway:
-    enabled: true
-    locations: classpath:db/migration
-    baseline-on-migrate: true
-    clean-disabled: false  # ← Permite limpar para testes
-    baseline-version: 0
-    validate-on-migrate: true
-
-logging:
-  level:
-    org.flywaydb: DEBUG
-    org.hibernate.SQL: DEBUG
-
   mail:
     host: smtp.gmail.com
     port: 587
@@ -45,6 +16,37 @@ logging:
           connectiontimeout: 5000
           timeout: 3000
           writetimeout: 5000
+
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:3306/condominio}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:root}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: none  # ← MUDEI AQUI! Deixe o Flyway gerenciar tudo
+#      naming:
+#        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    clean-disabled: false  # ← Permite limpar para testes
+    baseline-version: 0
+    validate-on-migrate: false
+
+logging:
+  level:
+    org.flywaydb: DEBUG
+    org.hibernate.SQL: DEBUG
+
+
 
 jwt:
   secret: cNJMEIglskoeBzYtj53P6c23dCJgUoGdgSpF9oDQdSM=

@@ -11,27 +11,29 @@ import java.time.LocalDateTime;
 @Setter
 @NoArgsConstructor
 @Entity
+@Table(name = "`ConfirmationToken`")
 public class ConfirmationToken {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(nullable = false)
-    private String token; // O código UUID que vai no link
+    private String token;
 
-    @Column(nullable = false)
-    private LocalDateTime createdAt; // Quando foi criado
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt;
 
-    @Column(nullable = false)
-    private LocalDateTime expiresAt; // Quando expira (ex: 15 min depois)
+    @Column(name = "expires_at", nullable = false)
+    private LocalDateTime expiresAt;
 
-    private LocalDateTime confirmedAt; // Quando o usuário clicou (se null, não clicou)
+    @Column(name = "confirmed_at")
+    private LocalDateTime confirmedAt;
 
     @ManyToOne
     @JoinColumn(nullable = false, name = "user_id")
     private User user;
 
-    // Construtor personalizado para facilitar a criação lá no Service
     public ConfirmationToken(String token, LocalDateTime createdAt, LocalDateTime expiresAt, User user) {
         this.token = token;
         this.createdAt = createdAt;

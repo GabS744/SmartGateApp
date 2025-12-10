@@ -150,3 +150,16 @@ CREATE TABLE Users (
                        date_of_birth DATE,
                        created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE ConfirmationToken (
+                                    id           BIGINT AUTO_INCREMENT PRIMARY KEY,
+                                    token        VARCHAR(255) NOT NULL,
+                                    created_at   DATETIME(6) NOT NULL,
+                                    expires_at   DATETIME(6) NOT NULL,
+                                    confirmed_at DATETIME(6),
+                                    user_id      CHAR(36) NOT NULL,
+                                    CONSTRAINT fk_confirmation_token_user
+                                        FOREIGN KEY (user_id)
+                                            REFERENCES Users(id)
+                                            ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
