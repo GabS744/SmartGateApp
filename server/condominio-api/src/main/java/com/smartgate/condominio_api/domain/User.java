@@ -3,6 +3,8 @@ package com.smartgate.condominio_api.domain;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import org.jspecify.annotations.Nullable;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -11,9 +13,10 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.UUID;
 
 @Entity
-@Table(name = "users")
+@Table(name = "Users")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -21,8 +24,8 @@ import java.util.Collections;
 @Builder
 public class User implements UserDetails {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(columnDefinition = "CHAR(36)")
+    private String id; // usar String se for CHAR(36) no MySQL
 
     @Column(name = "full_name", nullable = false, length = 150)
     private String fullName;
@@ -42,8 +45,11 @@ public class User implements UserDetails {
     @Column(nullable = false)
     private Boolean enabled;
 
-    @Column(name = "created_at", updatable = false, insertable = false)
+    @Column(name = "created_at", insertable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    @Column(name = "date_of_birth")
+    private LocalDate dateOfBirth;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -51,9 +57,15 @@ public class User implements UserDetails {
         return Collections.emptyList();
     }
 
+    @PrePersist
+    public void prePersist() {
+        if (id == null) {
+            id = UUID.randomUUID().toString();
+        }
+    }
     @Override
     public @Nullable String getPassword() {
-        return "";
+        return this.passwordHash;
     }
 
     @Override
