@@ -7,6 +7,7 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Collections;
@@ -35,8 +36,11 @@ public class User implements UserDetails {
     @Column(nullable = false, length = 50)
     private String role;
 
+    @Column(name = "birth_date", nullable = false)
+    private LocalDate birthDate;
+
     @Column(nullable = false)
-    private Boolean enabled = true;
+    private Boolean enabled;
 
     @Column(name = "created_at", updatable = false, insertable = false)
     private LocalDateTime createdAt;
@@ -74,6 +78,6 @@ public class User implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return true;
+        return this.enabled;
     }
 }

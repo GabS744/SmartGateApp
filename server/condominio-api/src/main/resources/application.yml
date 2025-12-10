@@ -22,6 +22,21 @@ spring:
     baseline-on-migrate: true
     clean-disabled: true
 
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: smartgateapp01@gmail.com
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+          connectiontimeout: 5000
+          timeout: 3000
+          writetimeout: 5000
+
 jwt:
   secret: cNJMEIglskoeBzYtj53P6c23dCJgUoGdgSpF9oDQdSM=
   expiration: 86400000
