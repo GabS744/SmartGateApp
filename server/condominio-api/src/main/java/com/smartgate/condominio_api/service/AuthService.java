@@ -125,7 +125,7 @@ public class AuthService {
     }
 
     @Transactional
-    public String confirmToken(String token) {
+    public void confirmToken(String token, String firstName) {
         ConfirmationToken confirmationToken = confirmationTokenRepository.findByToken(token)
                 .orElseThrow(() -> new IllegalStateException("Token não encontrado"));
 
@@ -145,6 +145,27 @@ public class AuthService {
         user.setEnabled(true);
         userRepository.save(user);
 
-        return "Conta confirmada com sucesso!";
+        String emailHtml = """
+            <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #ddd;">
+                <p style="font-size: 16px; margin-bottom: 20px; text-align: center;">Olá, <strong>João</strong>!</p>
+            
+                <p style="font-size: 14px; line-height: 1.6; margin-bottom: 15px; text-align: center;">
+                    Sua conta no <strong>SmartGate</strong> foi confirmada com sucesso!
+                </p>
+                
+                <p style="font-size: 14px; line-height: 1.6; margin-bottom: 15px; color: #555555; text-align: center;">
+                    Volte para o aplicativo para começar a usá-lo!
+                </p>
+                
+                <p style="font-size: 13px; line-height: 1.6; margin-bottom: 25px; color: #888; text-align: center;">
+                    Se você não se cadastrou no SmartGate recentemente, por favor ignore este email.
+                </p>
+                
+                <p style="font-size: 14px; margin-bottom: 5px; text-align: center;">Atenciosamente,</p>
+                <p style="font-size: 14px; font-weight: bold; color: #2c3e50; text-align: center;">Equipe SmartGate</p>
+            </div>
+            """.formatted(firstName);
+
+        emailService.send(user.getEmail(), emailHtml);
     }
 }
