@@ -95,11 +95,29 @@ public class AuthService {
 
         String emailHtml = """
             <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #ddd;">
-                <h2 style="color: #2c3e50;">Bem-vindo ao SmartGate!</h2>
-                <p>Olá, %s.</p>
-                <p>Clique no botão abaixo para ativar sua conta:</p>
-                <a href="%s" style="background-color: #3498db; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Ativar Conta</a>
-                <p style="font-size: 12px; color: #888;">Este link é válido por 15 minutos.</p>
+                <p style="font-size: 16px; margin-bottom: 20px; text-align: center;">Olá, <strong>%s</strong>!</p>
+            
+                <p style="font-size: 14px; line-height: 1.6; margin-bottom: 15px; text-align: center;">
+                    Sua conta no <strong>SmartGate</strong> está quase pronta! <br/> Para ativá-la, por favor confirme o seu endereço de email clicando no link abaixo.
+                </p>
+                
+                <div style="text-align: center; margin: 30px 0;">
+                    <a href="%s" 
+                    style="background-color: #2c3e50; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
+                    Confirmar meu email
+                    </a>
+                </div>
+                
+                <p style="font-size: 14px; line-height: 1.6; margin-bottom: 15px; color: #555; text-align: center;">
+                    Sua conta não será ativada até que seu email seja confirmado.
+                </p>
+                
+                <p style="font-size: 13px; line-height: 1.6; margin-bottom: 25px; color: #888; text-align: center;">
+                    Se você não se cadastrou no SmartGate recentemente, por favor ignore este email.
+                </p>
+                
+                <p style="font-size: 14px; margin-bottom: 5px; text-align: center;">Atenciosamente,</p>
+                <p style="font-size: 14px; font-weight: bold; color: #2c3e50; text-align: center;">Equipe SmartGate</p>
             </div>
             """.formatted(firstName, link);
 
