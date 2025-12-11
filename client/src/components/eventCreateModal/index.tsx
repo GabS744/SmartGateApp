@@ -68,6 +68,10 @@ export default function EventCreateModal({ visible, onClose, onSave, initialData
   // regex: dd/mm/yyyy (simple, years 1900-2099) and time HH:MM (00-23:00-59)
   const DATE_REGEX = /^(0[1-9]|[12]\d|3[01])\/(0[1-9]|1[0-2])\/(19|20)\d{2}$/;
   const TIME_REGEX = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
+  const TITLE_REGEX = /^.{3,}$/;
+  const CREATED_BY_REGEX = /^[^\d]+$/; // no digits in name
+  const LOCATION_REGEX = /^.{2,}$/;
+  const DESCRIPTION_REGEX = /^.{5,}$/;
 
   const parseDateFromText = (text: string): Date | null => {
     const parts = text.split('/');
@@ -86,14 +90,18 @@ export default function EventCreateModal({ visible, onClose, onSave, initialData
 
   const validate = (): string | null => {
     if (!title.trim()) return 'Título é obrigatório.';
+    if (!TITLE_REGEX.test(title.trim())) return 'Título deve ter ao menos 3 caracteres.';
     // allow either a selected date or a valid typed date
     if (!date && !dateText) return 'Data é obrigatória.';
     if (!date && dateText && !DATE_REGEX.test(dateText.trim())) return 'Data deve estar no formato DD/MM/AAAA.';
     if (!time.trim()) return 'Hora é obrigatória.';
     if (!TIME_REGEX.test(time.trim())) return 'Hora deve estar no formato HH:MM (00-23:59).';
     if (!location.trim()) return 'Local é obrigatório.';
+    if (!LOCATION_REGEX.test(location.trim())) return 'Local deve ter ao menos 2 caracteres.';
     if (!createdBy.trim()) return 'Responsável é obrigatório.';
+    if (!CREATED_BY_REGEX.test(createdBy.trim())) return 'Nome do responsável não pode conter números.';
     if (!description.trim()) return 'Descrição é obrigatória.';
+    if (!DESCRIPTION_REGEX.test(description.trim())) return 'Descrição deve ter ao menos 5 caracteres.';
 
     return null;
   };
@@ -122,8 +130,22 @@ export default function EventCreateModal({ visible, onClose, onSave, initialData
       description: description.trim(),
     };
 
+    // Log what will be submitted
+    console.log('Event form submit:', data);
+
     onSave(data);
     onClose();
+  };
+
+  // Format time as user types: inserts ':' after 2 digits
+  const formatTimeInput = (input: string) => {
+    const digits = input.replace(/[^0-9]/g, '');
+    let out = digits;
+    if (digits.length > 2) {
+      out = digits.slice(0, 2) + ':' + digits.slice(2, 4);
+    }
+    if (out.length > 5) out = out.slice(0, 5);
+    setTime(out);
   };
 
   return (
@@ -154,17 +176,28 @@ export default function EventCreateModal({ visible, onClose, onSave, initialData
                   <Text className="text-red-500">*</Text>
                 </View>
                 <View className="flex-row items-center">
-                  <InputField
+                 <InputField
                     placeholder="DD/MM/AAAA"
                     value={dateText}
-                    onChangeText={(t) => {
-                      setDateText(t);
-                      const parsed = parseDateFromText(t);
-                      if (parsed) setDate(parsed);
-                    }}
                     keyboardType="numeric"
+                    onChangeText={(t) => {
+                        // remove tudo que não for número
+                        const digits = t.replace(/\D/g, '').slice(0, 8);
+
+                        // formata: dd/mm/aaaa
+                        let formatted = digits;
+                        if (digits.length > 2) formatted = digits.slice(0, 2) + '/' + digits.slice(2);
+                        if (digits.length > 4) formatted = formatted.slice(0, 5) + '/' + formatted.slice(5);
+
+                        setDateText(formatted);
+
+                        // valida e atualiza date
+                        const parsed = parseDateFromText(formatted);
+                        if (parsed) setDate(parsed);
+                    }}
                     className="flex-1"
-                  />
+                    />
+
                   <TouchableOpacity
                     onPress={() => setTimeout(() => setShowDatePicker(true), 80)}
                     onPressIn={() => setShowDatePicker(true)}
@@ -182,7 +215,7 @@ export default function EventCreateModal({ visible, onClose, onSave, initialData
                 <Text className="ml-2 font-bold text-[#131E46]">Hora</Text>
                 <Text className="text-red-500">*</Text>
               </View>
-              <InputField placeholder="HH:MM" value={time} onChangeText={setTime} keyboardType="numeric" />
+              <InputField placeholder="__:__" value={time} onChangeText={formatTimeInput} keyboardType="numeric" />
             </View>
 
             <View className="mb-4">
@@ -208,37 +241,46 @@ export default function EventCreateModal({ visible, onClose, onSave, initialData
               <InputField placeholder="Descrição" value={description} onChangeText={setDescription} multiline numberOfLines={4} />
             </View>
 
-            <TouchableOpacity onPress={handleSave} className="w-full flex-row items-center justify-center rounded-lg bg-[#131E46] py-3">
-              {initialData ? <Check size={18} color="#FFF" /> : <Plus size={18} color="#FFF" />}
-              <Text className="ml-2 text-lg font-bold text-white">{initialData ? 'Salvar' : 'Adicionar'}</Text>
+           <TouchableOpacity
+                onPress={handleSave}  
+                accessibilityRole="button"
+                className="w-full flex-row items-center justify-center rounded-lg bg-[#131E46] py-3"
+                >
+                {initialData ? <Check size={18} color="#FFF" /> : <Plus size={18} color="#FFF" />}
+                <Text className="ml-2 text-lg font-bold text-white">
+                    {initialData ? 'Salvar' : 'Adicionar'}
+                </Text>
             </TouchableOpacity>
+
           </ScrollView>
         </View>
 
-        {showDatePicker && (
-          <DateTimePicker
-            value={date || new Date()}
-            mode="date"
-            display="spinner"
-            onChange={(e, d) => {
-              setShowDatePicker(false);
-              if (d) {
-                setDate(d);
-                try {
-                  const txt = d.toLocaleDateString('pt-BR');
-                  setDateText(txt);
-                // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                } catch(err) {
-                  // fallback manual format
-                  const dd = String(d.getDate()).padStart(2, '0');
-                  const mm = String(d.getMonth() + 1).padStart(2, '0');
-                  const yyyy = d.getFullYear();
-                  setDateText(`${dd}/${mm}/${yyyy}`);
-                }
-              }
-            }}
-          />
-        )}
+    {showDatePicker && (
+    <DateTimePicker
+        value={date || new Date()}
+        mode="date"
+        display="spinner"
+        onChange={(e, d) => {
+        if (e.type === "dismissed") {
+            setShowDatePicker(false);
+            return;
+        }
+
+        if (d) {
+            setShowDatePicker(false);
+
+            setDate(d);
+
+            const dd = String(d.getDate()).padStart(2, '0');
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const yyyy = d.getFullYear();
+
+            setDateText(`${dd}/${mm}/${yyyy}`);
+        }
+        }}
+    />
+    )}
+
       </View>
     </Modal>
   );
