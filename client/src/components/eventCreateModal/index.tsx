@@ -30,6 +30,7 @@ export default function EventCreateModal({ visible, onClose, onSave, initialData
   const [description, setDescription] = useState('');
 
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [tempDate, setTempDate] = useState<Date>(new Date());
 
   useEffect(() => {
     if (visible) {
@@ -165,48 +166,33 @@ export default function EventCreateModal({ visible, onClose, onSave, initialData
                 <Text className="font-bold text-[#131E46]">Título</Text>
                 <Text className="text-red-500">*</Text>
               </View>
-              <InputField placeholder="Título do evento" value={title} onChangeText={setTitle} />
+              <InputField bgColor ='white' placeholder="Título do evento" value={title} onChangeText={setTitle} />
             </View>
 
             <View className="mb-4">
-              <View className="mb-1 flex-row items-center justify-between">
+              <View className="mb-1 flex-col justify-between">
                 <View className="flex-row items-center">
-                  <Calendar size={16} color="#131E46" />
                   <Text className="ml-2 font-bold text-[#131E46]">Data</Text>
                   <Text className="text-red-500">*</Text>
                 </View>
-                <View className="flex-row items-center">
-                 <InputField
-                    placeholder="DD/MM/AAAA"
-                    value={dateText}
-                    keyboardType="numeric"
-                    onChangeText={(t) => {
-                        // remove tudo que não for número
-                        const digits = t.replace(/\D/g, '').slice(0, 8);
-
-                        // formata: dd/mm/aaaa
-                        let formatted = digits;
-                        if (digits.length > 2) formatted = digits.slice(0, 2) + '/' + digits.slice(2);
-                        if (digits.length > 4) formatted = formatted.slice(0, 5) + '/' + formatted.slice(5);
-
-                        setDateText(formatted);
-
-                        // valida e atualiza date
-                        const parsed = parseDateFromText(formatted);
-                        if (parsed) setDate(parsed);
-                    }}
-                    className="flex-1"
-                    />
-
+              
                   <TouchableOpacity
-                    onPress={() => setTimeout(() => setShowDatePicker(true), 80)}
-                    onPressIn={() => setShowDatePicker(true)}
-                    className="ml-2 px-2 py-1 rounded bg-white border border-gray-300"
+                    onPress={() => {
+                      const start = date || new Date();
+                      setTempDate(start);
+                      setTimeout(() => setShowDatePicker(true), 80);
+                    }}
+                    onPressIn={() => {
+                      const start = date || new Date();
+                      setTempDate(start);
+                      setShowDatePicker(true);
+                    }}
+                    className="ml-1 mr-1 mt-2 px-2 py-2 border-[#283B7D] border rounded-lg bg-white "
                   >
                     <Calendar size={16} color="#131E46" />
                   </TouchableOpacity>
                 </View>
-              </View>
+            
             </View>
 
             <View className="mb-4">
@@ -215,7 +201,7 @@ export default function EventCreateModal({ visible, onClose, onSave, initialData
                 <Text className="ml-2 font-bold text-[#131E46]">Hora</Text>
                 <Text className="text-red-500">*</Text>
               </View>
-              <InputField placeholder="__:__" value={time} onChangeText={formatTimeInput} keyboardType="numeric" />
+              <InputField bgColor ='white' placeholder="__:__" value={time} onChangeText={formatTimeInput} keyboardType="numeric" />
             </View>
 
             <View className="mb-4">
@@ -224,7 +210,7 @@ export default function EventCreateModal({ visible, onClose, onSave, initialData
                 <Text className="ml-2 font-bold text-[#131E46]">Local</Text>
                 <Text className="text-red-500">*</Text>
               </View>
-              <InputField placeholder="Local do evento" value={location} onChangeText={setLocation} />
+              <InputField bgColor ='white' placeholder="Local do evento" value={location} onChangeText={setLocation} />
             </View>
 
             <View className="mb-4">
@@ -233,12 +219,12 @@ export default function EventCreateModal({ visible, onClose, onSave, initialData
                 <Text className="ml-2 font-bold text-[#131E46]">Responsável</Text>
                 <Text className="text-red-500">*</Text>
               </View>
-              <InputField placeholder="Nome do responsável" value={createdBy} onChangeText={setCreatedBy} />
+              <InputField bgColor ='white' placeholder="Nome do responsável" value={createdBy} onChangeText={setCreatedBy} />
             </View>
 
             <View className="mb-6">
               <Text className="mb-1 font-bold text-[#131E46]">Descrição</Text>
-              <InputField placeholder="Descrição" value={description} onChangeText={setDescription} multiline numberOfLines={4} />
+              <InputField bgColor ="white" placeholder="Descrição" value={description} onChangeText={setDescription} multiline numberOfLines={4} />
             </View>
 
            <TouchableOpacity
@@ -255,31 +241,48 @@ export default function EventCreateModal({ visible, onClose, onSave, initialData
           </ScrollView>
         </View>
 
-    {showDatePicker && (
-    <DateTimePicker
-        value={date || new Date()}
-        mode="date"
-        display="spinner"
-        onChange={(e, d) => {
-        if (e.type === "dismissed") {
-            setShowDatePicker(false);
-            return;
-        }
+        {showDatePicker && (
+          <Modal visible transparent animationType="fade">
+            <View className="flex-1 bg-black/40 justify-center items-center px-6">
+              <View className="bg-white w-full rounded-xl p-4">
+                <Text className="text-lg font-semibold text-[#131E46] mb-2">Selecione a data</Text>
+                <DateTimePicker
+                  value={tempDate}
+                  mode="date"
+                  display="spinner"
+                  onChange={(_, d) => {
+                    if (d) setTempDate(d);
+                  }}
+                />
 
-        if (d) {
-            setShowDatePicker(false);
+                <View className="flex-row justify-end mt-4">
+                  <TouchableOpacity
+                    onPress={() => {
+                      setShowDatePicker(false);
+                    }}
+                    className="px-4 py-2 mr-2 rounded bg-gray-200"
+                  >
+                    <Text>Cancelar</Text>
+                  </TouchableOpacity>
 
-            setDate(d);
-
-            const dd = String(d.getDate()).padStart(2, '0');
-            const mm = String(d.getMonth() + 1).padStart(2, '0');
-            const yyyy = d.getFullYear();
-
-            setDateText(`${dd}/${mm}/${yyyy}`);
-        }
-        }}
-    />
-    )}
+                  <TouchableOpacity
+                    onPress={() => {
+                      setShowDatePicker(false);
+                      setDate(tempDate);
+                      const dd = String(tempDate.getDate()).padStart(2, '0');
+                      const mm = String(tempDate.getMonth() + 1).padStart(2, '0');
+                      const yyyy = tempDate.getFullYear();
+                      setDateText(`${dd}/${mm}/${yyyy}`);
+                    }}
+                    className="px-4 py-2 rounded bg-[#131E46]"
+                  >
+                    <Text className="text-white">Manter</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </Modal>
+        )}
 
       </View>
     </Modal>
