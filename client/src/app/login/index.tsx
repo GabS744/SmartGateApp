@@ -24,10 +24,11 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      const { token, user } = await login(email, password);
+      await login(email, password);
+
       router.replace('/menu');
-    } catch (error) {
-      alert('Erro ao fazer login. Verifique suas credenciais e tente novamente.');
+    } catch (error: any) {
+      alert(error.message || 'Erro ao fazer login.');
     } finally {
       setIsLoading(false);
     }
@@ -37,7 +38,7 @@ export default function Login() {
 
   return (
     <SafeAreaView className="flex-1 items-center bg-[#F2F3FB]">
-      <Shape height={240} width='100%'>
+      <Shape height={240} width="100%">
         <Text>teste</Text>
       </Shape>
       <View className="w-96 items-center">
@@ -48,14 +49,14 @@ export default function Login() {
           value={email}
           onChangeText={setEmail}
           autoCapitalize="none"
-          icon ={<Mail color={iconColor} size={25} />}
+          icon={<Mail color={iconColor} size={25} />}
         />
         <InputField
           placeholder="Digite sua senha..."
           secureTextEntry={true}
           value={password}
           onChangeText={setPassword}
-          icon ={<Lock color={iconColor} size={25} />}
+          icon={<Lock color={iconColor} size={25} />}
         />
       </View>
       <View className="w-96 items-end">
