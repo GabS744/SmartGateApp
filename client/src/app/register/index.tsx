@@ -10,7 +10,6 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import Button from '@/components/Button';
 import { register } from '@/services/api';
 
-
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
 export default function Register() {
@@ -30,19 +29,29 @@ export default function Register() {
       Alert.alert('Erro', 'Por favor, preencha todos os campos.');
       return;
     }
+
     if (password !== confirmPassword) {
       Alert.alert('Erro', 'As senhas não coincidem!');
       return;
     }
+
     setIsLoading(true);
     try {
-      const fullName = `${firstName} ${lastName}`.trim();
-      await register(fullName, email, password);
+      await register({
+        firstName,
+        lastName,
+        email,
+        password,
+        confirmPassword,
+        dateOfBirth,
+      });
+
       Alert.alert('Sucesso', 'Conta criada com sucesso!', [
         { text: 'Ir para Login', onPress: () => router.replace('/login') },
       ]);
     } catch (error: any) {
-      Alert.alert('Erro no Cadastro', error.message);
+      const mensagemErro = error.message || 'Ocorreu um erro no cadastro.';
+      Alert.alert('Erro no Cadastro', mensagemErro);
     } finally {
       setIsLoading(false);
     }
@@ -70,16 +79,14 @@ export default function Register() {
 
   return (
     <SafeAreaView className="flex-1 bg-[#F2F3FB]">
-
       <KeyboardAwareScrollView
         className="flex-1"
         contentContainerStyle={{ alignItems: 'center', paddingBottom: 100 }}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
-        enableOnAndroid={true} 
-        extraScrollHeight={40} 
-        enableAutomaticScroll={true}
-      >
+        enableOnAndroid={true}
+        extraScrollHeight={40}
+        enableAutomaticScroll={true}>
         <Shape height={120}>
           <Text className="text-2xl font-bold text-white">Criar Conta</Text>
         </Shape>

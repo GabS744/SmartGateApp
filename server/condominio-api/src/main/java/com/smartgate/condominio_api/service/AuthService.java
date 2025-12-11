@@ -91,6 +91,8 @@ public class AuthService {
 
         String link = "http://localhost:8080/v1/auth/confirm?token=" + tokenUuid;
 
+        System.out.println("Link de confirmação: " + link);
+
         String emailHtml = """
             <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #ddd;">
                 <h2 style="color: #2c3e50;">Bem-vindo ao SmartGate!</h2>
