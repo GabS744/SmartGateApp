@@ -1,9 +1,10 @@
 import { useState, useRef } from "react";
 import { View, Text, ScrollView, TouchableOpacity, Dimensions } from "react-native";
 import { useRouter } from 'expo-router';
-import { ChevronLeft, ChevronRight } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight, Plus } from 'lucide-react-native';
 import EventModal from "@/components/EventModal";
 import CalendarPicker from 'react-native-calendar-picker';
+import EventCreateModal, { EventFormData } from '@/components/eventCreateModal';
 
 type EventType = {
   id: number | string;
@@ -15,20 +16,23 @@ type EventType = {
   description: string;
 };
 
-export default function EventsPage() {
 
+export default function EventsPage() {
   function parseLocalDate(dateString: string) {
     const [y, m, d] = dateString.split("-").map(Number);
     return new Date(y, m - 1, d);
   }
+
+  const isAdmin = true; 
 
   const router = useRouter();
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const calendarRef = useRef<any>(null);
   const [selectedEvent, setSelectedEvent] = useState<EventType | null>(null);
   const [openModal, setOpenModal] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
-  const eventsByDay: Record<string, EventType[]> = {
+  const [eventsByDay, setEventsByDay] = useState<Record<string, EventType[]>>({
     "2025-12-01": [
       {
         id: 1,
@@ -51,7 +55,7 @@ export default function EventsPage() {
         description: "Discussão sobre orçamento anual.",
       },
     ],
-  };
+  });
 
   const dateKey = selectedDate ? selectedDate.toISOString().split("T")[0] : "";
   const events = dateKey ? eventsByDay[dateKey] || [] : [];
@@ -59,51 +63,81 @@ export default function EventsPage() {
   const eventDateStrings = Object.keys(eventsByDay);
 
   const customDatesStyles = eventDateStrings.map((d) => {
-  const date = parseLocalDate(d);
+    const date = parseLocalDate(d);
 
-  const isSelected =
-    selectedDate &&
-    date.toDateString() === selectedDate.toDateString();
+    const isSelected =
+      selectedDate &&
+      date.toDateString() === selectedDate.toDateString();
 
-  const isToday = new Date().toDateString() === date.toDateString();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const isToday = date.toDateString() === today.toDateString();
 
-  if (isSelected) {
-    // mantém azul do calendarPicker
-    return {
-      date,
-      containerStyle: {},
-      textStyle: {},
-    };
-  }
+    const circleSize = 32;
+    const circleStyle = {
+      width: circleSize,
+      height: circleSize,
+      borderRadius: circleSize / 2,
+      alignItems: 'center',
+      justifyContent: 'center',
+    } as any;
 
-  if (isToday) {
-    // dia de hoje: deixa o círculo branco mas texto escuro
+    if (isSelected) {
+      return {
+        date,
+        containerStyle: {
+          ...circleStyle,
+          backgroundColor: '#1E3070',
+        },
+        textStyle: { color: '#ffffff', fontWeight: '700' },
+      };
+    }
+
+    if (isToday) {
+      return {
+        date,
+        containerStyle: {
+          ...circleStyle,
+          backgroundColor: '#E8D8FF',
+        },
+        textStyle: { color: '#000000', fontWeight: '700' },
+      };
+    }
+
     return {
       date,
       containerStyle: {
-        backgroundColor: "#FFFFFF",
+        ...circleStyle,
+        backgroundColor: '#7C3AED',
       },
-      textStyle: {
-        color: "#1E3070",
-        fontWeight: "600",
-      },
+      textStyle: { color: '#fff', fontWeight: '600' },
     };
-  }
+  });
 
-  // dias com evento → roxo
-  return {
-    date,
-    containerStyle: {
-      backgroundColor: "#7C3AED",
-      borderRadius: 20, // garante que seja círculo perfeito
-      padding: 5,       // mantém o padding interno
-    },
-    textStyle: {
-      color: "#fff",
-      fontWeight: "600",
-    },
+  // onSave handler: converte dd/mm/yyyy para yyyy-mm-dd e adiciona o evento
+  const handleCreateSave = (data: EventFormData) => {
+    const key = data.fullDate ? data.fullDate.split('/').reverse().join('-') : new Date().toISOString().split('T')[0];
+
+    const newEvent: EventType = {
+      id: Date.now(),
+      title: data.title,
+      time: data.time,
+      fullDate: data.fullDate || '',
+      location: data.location,
+      createdBy: data.createdBy,
+      description: data.description,
+    };
+
+    setEventsByDay((prev) => ({
+      ...prev,
+      [key]: [newEvent, ...(prev[key] || [])],
+    }));
+
+    // se a data criada for a mesma do dia selecionado, atualiza a exibição
+    if (selectedDate && selectedDate.toISOString().split('T')[0] === key) {
+      setSelectedEvent(newEvent);
+    }
   };
-});
 
 
   return (
@@ -129,6 +163,15 @@ export default function EventsPage() {
               {/* Ícone de próximo */}
             </TouchableOpacity>
             <View style={{ width: 8 }} />
+            {isAdmin && (
+              <TouchableOpacity
+                onPress={() => setShowCreateModal(true)}
+                className="h-10 w-10 rounded-full bg-[#1E3070] items-center justify-center"
+                activeOpacity={0.8}
+              >
+                <Plus color="#fff" size={18} />
+              </TouchableOpacity>
+            )}
           </View>
         </View>
       </View>
@@ -186,6 +229,12 @@ export default function EventsPage() {
         visible={openModal}
         event={selectedEvent}
         onClose={() => setOpenModal(false)}
+      />
+      <EventCreateModal
+        visible={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onSave={handleCreateSave}
+        initialData={null}
       />
     </ScrollView>
   );
