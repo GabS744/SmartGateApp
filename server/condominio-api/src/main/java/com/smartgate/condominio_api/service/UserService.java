@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -23,11 +24,12 @@ public class UserService {
     public UserResponse create(UserRequest dto) {
         User user = mapper.toEntity(dto);
         user.setCreatedAt(LocalDateTime.now());
+        user.setDateOfBirth(dto.getDateOfBirth());
         user.setPasswordHash(passwordEncoder.encode(user.getPasswordHash()));
         return mapper.toUserResponse(repository.save(user));
     }
 
-    public UserResponse findById(Long id) {
+    public UserResponse findById(String id) {
         User user = repository.findById(id)
                 .orElseThrow(() -> new UserNotFoundException(id));
 
@@ -41,7 +43,7 @@ public class UserService {
                 .toList();
     }
 
-    public UserResponse update(Long id, UserRequest dto) {
+    public UserResponse update(String id, UserRequest dto) {
         User user = repository.findById(id)
                 .orElseThrow(() -> new UserNotFoundException(id));
 
@@ -51,7 +53,7 @@ public class UserService {
         return mapper.toUserResponse(repository.save(user));
     }
 
-    public void delete(Long id) {
+    public void delete(String id) {
         if (!repository.existsById(id)) {
             throw new UserNotFoundException(id);
         }
