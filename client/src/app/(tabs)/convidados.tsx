@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { UserPlus, Users, History, QrCode } from 'lucide-react-native'; // Ícones novos
+import { UserPlus, Users, History } from 'lucide-react-native';
 
 import RoundIconBtn from '@/components/RoundIconBtn';
 import GuestCard from '@/components/GuestCard';

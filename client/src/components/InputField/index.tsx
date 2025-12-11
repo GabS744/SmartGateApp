@@ -7,10 +7,11 @@ interface InputFieldProps extends TextInputProps {
   label?: string;
   type?: InputFieldType;
   icon?: React.ReactNode;
-  onPress?: () => void; 
+  onPress?: () => void;
+  bgColor?: 'white' | 'blue';
 }
 
-const InputField = ({ label, type = 'text', icon, onPress, ...props }: InputFieldProps) => {
+const InputField = ({ label, type = 'text', icon, onPress, bgColor = 'white', ...props }: InputFieldProps) => {
   const [isFocused, setIsFocused] = useState(false);
   const nativeProps: TextInputProps = {};
 
@@ -27,35 +28,41 @@ const InputField = ({ label, type = 'text', icon, onPress, ...props }: InputFiel
       nativeProps.keyboardType = 'numeric';
       break;
     case 'date':
-     
-      nativeProps.showSoftInputOnFocus = false; 
-      nativeProps.editable = false; 
+      nativeProps.showSoftInputOnFocus = false;
+      nativeProps.editable = false;
       break;
-    case 'text':
     default:
       nativeProps.keyboardType = 'default';
-      break;
   }
 
-  const renderInput = () => (
-    <View
-      className={`
-        w-full flex-row items-center rounded-lg border-2 bg-white
-        dark:bg-gray-800
-        ${isFocused ? 'border-[#283B7D]' : 'border-[#283B7D]'} 
-      `}>
-      {icon && <View className="pl-4">{icon}</View>}
+  const renderInput = () => {
+    const containerBase = 'w-full flex-row items-center rounded-lg border';
+    const bgClass = bgColor === 'blue' ? 'bg-[#131E46]' : 'bg-white';
+    const darkBgClass = '';
+    const borderClass = isFocused ? 'border-[#283B7D]' : 'border-[#283B7D]';
 
-      <TextInput
-        className="flex-1 p-4 text-base text-black dark:text-white"
-        placeholderTextColor="#6B84A1"
-        onFocus={() => setIsFocused(true)}
-        onBlur={() => setIsFocused(false)}
-        {...nativeProps}
-        {...props}
-      />
-    </View>
-  );
+    const inputTextClass =
+      bgColor === 'blue'
+        ? 'flex-1 p-4 text-base text-white'
+        : 'flex-1 p-4 text-base text-black dark:text-white';
+
+    const placeholderColor = bgColor === 'blue' ? '#DDE6FF' : '#6B84A1';
+
+    return (
+      <View className={`${containerBase} ${bgClass} ${darkBgClass} ${borderClass}`}>
+        {icon && <View className="pl-4">{icon}</View>}
+
+        <TextInput
+          className={inputTextClass}
+          placeholderTextColor={placeholderColor}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
+          {...nativeProps}
+          {...props}
+        />
+      </View>
+    );
+  };
 
   return (
     <View className="mb-4 w-full p-1">
@@ -67,7 +74,6 @@ const InputField = ({ label, type = 'text', icon, onPress, ...props }: InputFiel
 
       {type === 'date' ? (
         <Pressable onPress={onPress}>
-
           <View pointerEvents="none">{renderInput()}</View>
         </Pressable>
       ) : (
