@@ -1,6 +1,5 @@
 package com.smartgate.condominio_api.domain;
 
-import com.smartgate.condominio_api.utils.ExpenseStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;
@@ -33,9 +32,8 @@ public class Expense {
     @Column(name = "expense_date", nullable = false)
     private LocalDate expenseDate;
 
-    @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
-    private ExpenseStatus status = ExpenseStatus.PENDING;
+    private String status;
 
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;

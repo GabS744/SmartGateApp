@@ -15,6 +15,7 @@ import java.util.List;
 )
 public interface ExpenseMapper {
 
+    // CRIAR: Status é ignorado aqui porque definimos manualmente como PENDING no Service
     @Mapping(target = "idExpense", ignore = true)
     @Mapping(target = "category", ignore = true)
     @Mapping(target = "committeeMember", ignore = true)
@@ -31,11 +32,12 @@ public interface ExpenseMapper {
 
     List<ExpenseResponse> toResponseList(List<Expense> expenses);
 
+    // ATUALIZAR: Removemos o ignore do 'status' para permitir a edição!
     @Mapping(target = "idExpense", ignore = true)
-    @Mapping(target = "category", ignore = true)
+    @Mapping(target = "category", ignore = true) // Ignora pq atualizamos manualmente no Service (busca no banco)
     @Mapping(target = "committeeMember", ignore = true)
     @Mapping(target = "condominium", ignore = true)
-    @Mapping(target = "status", ignore = true)
+    // @Mapping(target = "status", ignore = true) <--- REMOVIDO: Agora o Mapper atualiza o status se vier no JSON
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     void updateEntityFromRequest(ExpenseUpdateRequest request, @MappingTarget Expense expense);
