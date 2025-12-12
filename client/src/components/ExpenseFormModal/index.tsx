@@ -4,6 +4,7 @@ import { X, Calendar, ChevronDown, DollarSign, Check, Plus } from 'lucide-react-
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { ExpenseData } from '../ExpenseDetailsModal';
 import InputField from '../InputField';
+import SelectModal from '../SelectModal';
 
 interface ExpenseFormModalProps {
   visible: boolean;
@@ -26,6 +27,8 @@ export default function ExpenseFormModal({
   const [date, setDate] = useState(new Date());
 
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showCategorySelect, setShowCategorySelect] = useState(false);
+  const [showStatusSelect, setShowStatusSelect] = useState(false);
 
   useEffect(() => {
     if (visible) {
@@ -55,14 +58,17 @@ export default function ExpenseFormModal({
       return;
     }
 
+    const [day, month, year] = date.toLocaleDateString('pt-BR').split('/');
+    const dateFormatted = `${year}-${month}-${day}`;
+
     const newData = {
-      id: initialData?.id || Math.random().toString(),
-      title: name,
+      ...(initialData && { id: initialData.id }),
+      name,
       category,
       description,
-      value,
-      status,
-      date: date.toLocaleDateString('pt-BR'),
+      amount: parseFloat(value.replace(',', '.')),
+      status: status === 'Pago' ? 'PAID' : status === 'Pendente' ? 'PENDING' : 'FUTURE',
+      expenseDate: dateFormatted,
     };
 
     onSave(newData);
@@ -70,23 +76,25 @@ export default function ExpenseFormModal({
   };
 
   const pickCategory = () => {
-    Alert.alert('Categoria', '', [
-      { text: 'Manutenção', onPress: () => setCategory('Manutenção') },
-      { text: 'Limpeza', onPress: () => setCategory('Limpeza') },
-      { text: 'Segurança', onPress: () => setCategory('Segurança') },
-      { text: 'Interno', onPress: () => setCategory('Interno') },
-      { text: 'Cancelar', style: 'cancel' },
-    ]);
+    setShowCategorySelect(true);
   };
 
   const pickStatus = () => {
-    Alert.alert('Status', '', [
-      { text: 'Pago', onPress: () => setStatus('Pago') },
-      { text: 'Pendente', onPress: () => setStatus('Pendente') },
-      { text: 'Futuro', onPress: () => setStatus('Futuro') },
-      { text: 'Cancelar', style: 'cancel' },
-    ]);
+    setShowStatusSelect(true);
   };
+
+  const categoryOptions = [
+    { label: 'Manutenção', value: 'Manutenção' },
+    { label: 'Limpeza', value: 'Limpeza' },
+    { label: 'Segurança', value: 'Segurança' },
+    { label: 'Interno', value: 'Interno' },
+  ];
+
+  const statusOptions = [
+    { label: 'Pago', value: 'Pago' },
+    { label: 'Pendente', value: 'Pendente' },
+    { label: 'Futuro', value: 'Futuro' },
+  ];
 
   return (
     <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
@@ -119,7 +127,7 @@ export default function ExpenseFormModal({
               </View>
               <TouchableOpacity
                 onPress={pickCategory}
-                className="w-full flex-row items-center justify-between rounded-lg border border-gray-400 bg-white p-4">
+                className="w-full flex-row items-center justify-between rounded-lg border border-[#283B7D] bg-white p-4">
                 <Text className={category ? 'text-[#131E46]' : 'text-gray-400'}>
                   {category || 'Selecione'}
                 </Text>
@@ -132,7 +140,7 @@ export default function ExpenseFormModal({
                 <Text className="font-bold text-[#131E46]">Valor (R$)</Text>
                 <Text className="text-red-500">*</Text>
               </View>
-              <View className="w-full flex-row items-center rounded-lg border border-gray-400 bg-white px-4">
+              <View className="w-full flex-row items-center rounded-lg border border-[#283B7D] bg-white px-4">
                 <DollarSign size={20} color="#6B7280" />
                 <TextInput
                   className="flex-1 p-4 text-[#131E46]"
@@ -152,7 +160,7 @@ export default function ExpenseFormModal({
               </View>
               <TouchableOpacity
                 onPress={() => setShowDatePicker(true)}
-                className="w-full flex-row items-center rounded-lg border border-gray-400 bg-white p-4">
+                className="w-full flex-row items-center rounded-lg border border-[#283B7D] bg-white p-4">
                 <Calendar size={20} color="#9CA3AF" />
                 <Text className="ml-2 text-[#131E46]">{date.toLocaleDateString('pt-BR')}</Text>
               </TouchableOpacity>
@@ -176,7 +184,7 @@ export default function ExpenseFormModal({
               </View>
               <TouchableOpacity
                 onPress={pickStatus}
-                className="w-full flex-row items-center justify-between rounded-lg border border-gray-400 bg-white p-4">
+                className="w-full flex-row items-center justify-between rounded-lg border border-[#283B7D] bg-white p-4">
                 <Text className={status ? 'text-[#131E46]' : 'text-gray-400'}>
                   {status || 'Selecione'}
                 </Text>
@@ -209,6 +217,26 @@ export default function ExpenseFormModal({
           </ScrollView>
         </View>
       </View>
+
+      {/* Category Select Modal */}
+      <SelectModal
+        visible={showCategorySelect}
+        title="Categoria"
+        options={categoryOptions}
+        selectedValue={category}
+        onSelect={setCategory}
+        onClose={() => setShowCategorySelect(false)}
+      />
+
+      {/* Status Select Modal */}
+      <SelectModal
+        visible={showStatusSelect}
+        title="Status"
+        options={statusOptions}
+        selectedValue={status}
+        onSelect={setStatus}
+        onClose={() => setShowStatusSelect(false)}
+      />
     </Modal>
   );
 }

@@ -4,7 +4,7 @@ import { View, Text, ScrollView, TouchableOpacity, Modal, Alert } from 'react-na
 import VehicleCard from '@/components/VehicleCard';
 import { Plus, Check } from 'lucide-react-native';
 import InputField from '@/components/InputField';
-import { Picker } from '@react-native-picker/picker';
+import SelectModal from '@/components/SelectModal';
 import { useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -42,6 +42,7 @@ export default function VehiclesPage() {
     nameResponsible: '',
     nameApt: '',
   });
+  const [showTypeSelect, setShowTypeSelect] = useState(false);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -170,15 +171,13 @@ export default function VehiclesPage() {
             <ScrollView showsVerticalScrollIndicator={false}>
               <View className="mb-4">
                 <Text className="text-gray-600 text-sm mb-1">Tipo de Veículo</Text>
-                <View className="border border-gray-300 rounded-lg">
-                  <Picker
-                    selectedValue={addData.type}
-                    onValueChange={(value) => setAddData((old) => ({ ...old, type: String(value) }))}
-                  >
-                    <Picker.Item label="Carro" value="Carro" />
-                    <Picker.Item label="Moto" value="Moto" />
-                  </Picker>
-                </View>
+                <TouchableOpacity
+                  onPress={() => setShowTypeSelect(true)}
+                  className="w-full flex-row items-center justify-between rounded-lg border border-[#283B7D] bg-white p-4">
+                  <Text className={addData.type ? 'text-[#131E46]' : 'text-gray-400'}>
+                    {addData.type || 'Selecione'}
+                  </Text>
+                </TouchableOpacity>
                 {errors.type && <Text className="text-red-500 text-xs mt-1">{errors.type}</Text>}
               </View>
 
@@ -214,6 +213,19 @@ export default function VehiclesPage() {
           </View>
         </View>
       </Modal>
+
+      {/* Type Select Modal */}
+      <SelectModal
+        visible={showTypeSelect}
+        title="Tipo de Veículo"
+        options={[
+          { label: 'Carro', value: 'Carro' },
+          { label: 'Moto', value: 'Moto' },
+        ]}
+        selectedValue={addData.type}
+        onSelect={(value) => setAddData((old) => ({ ...old, type: value }))}
+        onClose={() => setShowTypeSelect(false)}
+      />
     </SafeAreaView>
   );
 }

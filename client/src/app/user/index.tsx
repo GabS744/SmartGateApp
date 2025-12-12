@@ -40,7 +40,7 @@ export default function User() {
   };
 
   return (
-    <SafeAreaView className="flex-1 items-center bg-[#CBD0F2]">
+    <SafeAreaView className="flex-1 items-center bg-[#F2F3FB]">
       <View className="flex-1 items-center justify-center gap-y-4 bg-white">
         <Text className="text-xl font-bold text-blue-500">Pagina de perfil!</Text>
 

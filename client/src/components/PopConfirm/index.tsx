@@ -42,14 +42,14 @@ export function PopupConfirm({
           <View className="flex-row gap-3 w-full">
             <TouchableOpacity
               onPress={onClose}
-              className="flex-1 bg-[#6A7FDB] py-2.5 rounded-xl items-center"
+              className="flex-1 bg-gray-300 py-2.5 rounded-xl items-center"
             >
-              <Text className="text-white font-semibold">Não</Text>
+              <Text className="text-[#131E46] font-semibold">Não</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               onPress={onConfirm}
-              className="flex-1 bg-[#313E4D] py-2.5 rounded-xl items-center"
+              className="flex-1 bg-[#283B7D] py-2.5 rounded-xl items-center"
             >
               <Text className="text-white font-semibold">Sim</Text>
             </TouchableOpacity>

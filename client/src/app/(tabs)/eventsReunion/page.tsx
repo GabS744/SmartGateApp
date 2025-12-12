@@ -1,10 +1,12 @@
-import { useState, useRef } from "react";
-import { View, Text, ScrollView, TouchableOpacity, Dimensions } from "react-native";
+import { useState, useRef, useEffect } from "react";
+import { View, Text, ScrollView, TouchableOpacity, Dimensions, Alert } from "react-native";
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react-native';
 import EventModal from "@/components/EventModal";
 import CalendarPicker from 'react-native-calendar-picker';
 import EventCreateModal, { EventFormData } from '@/components/eventCreateModal';
+import { getAllMeetings, createMeeting } from '@/services/api';
 
 type EventType = {
   id: number | string;
@@ -18,56 +20,60 @@ type EventType = {
 
 
 export default function EventsPage() {
-  function parseLocalDate(dateString: string) {
-    const [y, m, d] = dateString.split("-").map(Number);
-    return new Date(y, m - 1, d);
-  }
-
-  const isAdmin = true; 
-
   const router = useRouter();
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const calendarRef = useRef<any>(null);
   const [selectedEvent, setSelectedEvent] = useState<EventType | null>(null);
   const [openModal, setOpenModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [eventsByDay, setEventsByDay] = useState<Record<string, EventType[]>>({});
+  const [loading, setLoading] = useState(true);
 
-  const [eventsByDay, setEventsByDay] = useState<Record<string, EventType[]>>({
-    "2025-12-01": [
-      {
-        id: 1,
-        title: "Multas",
-        time: "15:00",
-        fullDate: "Segunda-feira, 01 de dezembro de 2025",
-        location: "Salão de Festas - Bloco A",
-        createdBy: "Síndico João Silva",
-        description: "Reunião para discussão sobre novas regras de multas do condomínio.",
-      },
-    ],
-    "2025-12-02": [
-      {
-        id: 2,
-        title: "Assembleia Geral",
-        time: "19:30",
-        fullDate: "Terça-feira, 02 de dezembro de 2025",
-        location: "Auditório",
-        createdBy: "Síndico João Silva",
-        description: "Discussão sobre orçamento anual.",
-      },
-    ],
-  });
+  useEffect(() => {
+    const loadMeetings = async () => {
+      try {
+        setLoading(true);
+        const meetingsData = await getAllMeetings();
+        const grouped: Record<string, EventType[]> = {};
+        
+        meetingsData.forEach((meeting: any) => {
+          const dateKey = meeting.meetingDate || new Date().toISOString().split('T')[0];
+          if (!grouped[dateKey]) {
+            grouped[dateKey] = [];
+          }
+          grouped[dateKey].push({
+            id: meeting.id,
+            title: meeting.title,
+            time: meeting.meetingTime || '00:00',
+            fullDate: meeting.meetingDate || '',
+            location: meeting.location || 'Condomínio',
+            createdBy: meeting.createdBy || 'Admin',
+            description: meeting.description || '',
+          });
+        });
+        
+        setEventsByDay(grouped);
+      } catch (error) {
+        console.log('Erro ao carregar eventos:', error);
+        setEventsByDay({});
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadMeetings();
+  }, []);
 
-  const dateKey = selectedDate ? selectedDate.toISOString().split("T")[0] : "";
-  const events = dateKey ? eventsByDay[dateKey] || [] : [];
+  const dateKey = selectedDate.toISOString().split("T")[0];
+  const events = eventsByDay[dateKey] || [];
 
   const eventDateStrings = Object.keys(eventsByDay);
 
-  const customDatesStyles = eventDateStrings.map((d) => {
-    const date = parseLocalDate(d);
+  const customDatesStyles = eventDateStrings.map((dateStr) => {
+    const [y, m, d] = dateStr.split("-").map(Number);
+    const date = new Date(y, m - 1, d);
 
-    const isSelected =
-      selectedDate &&
-      date.toDateString() === selectedDate.toDateString();
+    const isSelected = dateKey === dateStr;
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -87,7 +93,7 @@ export default function EventsPage() {
         date,
         containerStyle: {
           ...circleStyle,
-          backgroundColor: '#1E3070',
+          backgroundColor: '#131E46',
         },
         textStyle: { color: '#ffffff', fontWeight: '700' },
       };
@@ -98,9 +104,9 @@ export default function EventsPage() {
         date,
         containerStyle: {
           ...circleStyle,
-          backgroundColor: '#E8D8FF',
+          backgroundColor: '#E5E7EB',
         },
-        textStyle: { color: '#000000', fontWeight: '700' },
+        textStyle: { color: '#131E46', fontWeight: '700' },
       };
     }
 
@@ -108,47 +114,63 @@ export default function EventsPage() {
       date,
       containerStyle: {
         ...circleStyle,
-        backgroundColor: '#7C3AED',
+        backgroundColor: '#283B7D',
       },
       textStyle: { color: '#fff', fontWeight: '600' },
     };
   });
 
-  // onSave handler: converte dd/mm/yyyy para yyyy-mm-dd e adiciona o evento
-  const handleCreateSave = (data: EventFormData) => {
-    const key = data.fullDate ? data.fullDate.split('/').reverse().join('-') : new Date().toISOString().split('T')[0];
+  const handleCreateSave = async (data: EventFormData) => {
+    try {
+      const [d, m, y] = (data.fullDate || '').split('/').map(Number);
+      const dateKey = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
 
-    const newEvent: EventType = {
-      id: Date.now(),
-      title: data.title,
-      time: data.time,
-      fullDate: data.fullDate || '',
-      location: data.location,
-      createdBy: data.createdBy,
-      description: data.description,
-    };
+      await createMeeting({
+        title: data.title,
+        meetingDate: dateKey,
+        meetingTime: data.time,
+        location: data.location,
+        description: data.description,
+      });
 
-    setEventsByDay((prev) => ({
-      ...prev,
-      [key]: [newEvent, ...(prev[key] || [])],
-    }));
-
-    // se a data criada for a mesma do dia selecionado, atualiza a exibição
-    if (selectedDate && selectedDate.toISOString().split('T')[0] === key) {
-      setSelectedEvent(newEvent);
+      const updatedMeetings = await getAllMeetings();
+      const grouped: Record<string, EventType[]> = {};
+      
+      updatedMeetings.forEach((meeting: any) => {
+        const key = meeting.meetingDate || new Date().toISOString().split('T')[0];
+        if (!grouped[key]) {
+          grouped[key] = [];
+        }
+        grouped[key].push({
+          id: meeting.id,
+          title: meeting.title,
+          time: meeting.meetingTime || '00:00',
+          fullDate: meeting.meetingDate || '',
+          location: meeting.location || 'Condomínio',
+          createdBy: meeting.createdBy || 'Admin',
+          description: meeting.description || '',
+        });
+      });
+      
+      setEventsByDay(grouped);
+      setShowCreateModal(false);
+    } catch (error) {
+      Alert.alert('Erro', 'Falha ao criar evento');
+      console.log('Erro ao criar evento:', error);
     }
   };
 
 
   return (
-    <ScrollView className="flex-1 p-2 bg-white" contentContainerStyle={{ paddingBottom: 140 }}>
-      {/* Header */}
-      <View className="mb-2 w-full flex-row items-center justify-between">
-        <View className="flex-row items-center justify-between w-full px-4">
-          <View className="items-center">
-            <TouchableOpacity
-              onPress={() => router.push('/')}
-              className="p-2 ml-1"
+    <SafeAreaView className="flex-1 bg-white">
+      <ScrollView className="flex-1 p-2" contentContainerStyle={{ paddingBottom: 140 }}>
+        {/* Header */}
+        <View className="mb-2 w-full flex-row items-center justify-between">
+          <View className="flex-row items-center justify-between w-full px-4">
+            <View className="items-center">
+              <TouchableOpacity
+                onPress={() => router.push('/')}
+                className="p-2 ml-1"
             >
               {/* Aqui você pode colocar um ícone de voltar */}
             </TouchableOpacity>
@@ -163,15 +185,13 @@ export default function EventsPage() {
               {/* Ícone de próximo */}
             </TouchableOpacity>
             <View style={{ width: 8 }} />
-            {isAdmin && (
-              <TouchableOpacity
-                onPress={() => setShowCreateModal(true)}
-                className="h-10 w-10 rounded-full bg-[#1E3070] items-center justify-center"
-                activeOpacity={0.8}
-              >
-                <Plus color="#fff" size={18} />
-              </TouchableOpacity>
-            )}
+            <TouchableOpacity
+              onPress={() => setShowCreateModal(true)}
+              className="h-10 w-10 rounded-full bg-[#131E46] items-center justify-center"
+              activeOpacity={0.8}
+            >
+              <Plus color="#fff" size={18} />
+            </TouchableOpacity>
           </View>
         </View>
       </View>
@@ -183,10 +203,10 @@ export default function EventsPage() {
           selectedStartDate={selectedDate}
           onDateChange={(date: any) => setSelectedDate(date)}
           onMonthChange={(date: any) => setSelectedDate(date)}
-          selectedDayColor="#1E3070"           // azul do dia selecionado
+          selectedDayColor="#131E46"
           selectedDayTextColor="#ffffff"
-          todayBackgroundColor="#FFFFFF"
-          customDatesStyles={customDatesStyles} // círculos roxos nos dias com evento
+          todayBackgroundColor="#E5E7EB"
+          customDatesStyles={customDatesStyles}
           scaleFactor={375}
           width={Dimensions.get('window').width - 32}
           previousComponent={<ChevronLeft size={16} color="#283B7D" />}
@@ -201,41 +221,49 @@ export default function EventsPage() {
       {/* Agenda do dia */}
       <View className="px-6 mt-6">
         <Text className="text-lg font-bold mb-4">
-          {selectedDate && events.length > 0 ? events[0].fullDate : "Nenhum evento para este dia"}
+          {loading ? "Carregando eventos..." : selectedDate ? selectedDate.toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : "Nenhum evento"}
         </Text>
 
-        {events.map((ev: EventType) => (
-          <TouchableOpacity
-            key={ev.id}
-            onPress={() => {
-              setSelectedEvent(ev);
-              setOpenModal(true);
-            }}
-            className="bg-white p-4 rounded-xl mb-3 shadow"
-          >
-            <View className="flex-row justify-between items-center mb-1">
-              <Text className="font-bold text-[#131E46]">{ev.title}</Text>
-              <Text className="bg-[#E7D0FF] px-2 py-1 rounded-full text-xs text-[#341347]">
-                {ev.time}
-              </Text>
-            </View>
+        {!loading && events.length > 0 ? (
+          events.map((ev: EventType) => (
+            <TouchableOpacity
+              key={ev.id}
+              onPress={() => {
+                setSelectedEvent(ev);
+                setOpenModal(true);
+              }}
+              className="bg-white p-4 rounded-xl mb-3 shadow border border-[#283B7D]"
+            >
+              <View className="flex-row justify-between items-center mb-1">
+                <Text className="font-bold text-[#131E46]">{ev.title}</Text>
+                <Text className="bg-[#E5E7EB] px-2 py-1 rounded-full text-xs text-[#131E46]">
+                  {ev.time}
+                </Text>
+              </View>
 
-            <Text className="text-gray-600">{ev.description}</Text>
-          </TouchableOpacity>
-        ))}
+              <Text className="text-gray-600 text-sm mb-1">{ev.location}</Text>
+              <Text className="text-gray-600 text-xs">{ev.description}</Text>
+            </TouchableOpacity>
+          ))
+        ) : (
+          <Text className="mt-2 text-center text-gray-500">
+            {loading ? "Carregando..." : "Nenhum evento para este dia"}
+          </Text>
+        )}
       </View>
 
-      <EventModal
-        visible={openModal}
-        event={selectedEvent}
-        onClose={() => setOpenModal(false)}
-      />
-      <EventCreateModal
-        visible={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
-        onSave={handleCreateSave}
-        initialData={null}
-      />
-    </ScrollView>
+        <EventModal
+          visible={openModal}
+          event={selectedEvent}
+          onClose={() => setOpenModal(false)}
+        />
+        <EventCreateModal
+          visible={showCreateModal}
+          onClose={() => setShowCreateModal(false)}
+          onSave={handleCreateSave}
+          initialData={null}
+        />
+      </ScrollView>
+    </SafeAreaView>
   );
 }

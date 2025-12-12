@@ -21,7 +21,7 @@ export function PopupStatus({
   return (
     <Modal transparent visible={visible} animationType="fade">
       <View className="flex-1 bg-black/40 items-center justify-center px-6">
-        <View className="bg-[#9BA7E7] w-72 rounded-2xl p-6 items-center shadow-lg">
+        <View className="bg-[#283B7D] w-72 rounded-2xl p-6 items-center shadow-lg">
 
           <View className="bg-white/20 p-4 rounded-full mb-4">
             <IconComponent size={44} color={iconColor} />

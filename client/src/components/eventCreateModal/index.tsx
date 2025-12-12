@@ -180,11 +180,6 @@ export default function EventCreateModal({ visible, onClose, onSave, initialData
                     onPress={() => {
                       const start = date || new Date();
                       setTempDate(start);
-                      setTimeout(() => setShowDatePicker(true), 80);
-                    }}
-                    onPressIn={() => {
-                      const start = date || new Date();
-                      setTempDate(start);
                       setShowDatePicker(true);
                     }}
                     className="ml-1 mr-1 mt-2 px-2 py-2 border-[#283B7D] border rounded-lg bg-white "
@@ -242,48 +237,22 @@ export default function EventCreateModal({ visible, onClose, onSave, initialData
         </View>
 
         {showDatePicker && (
-          <Modal visible transparent animationType="fade">
-            <View className="flex-1 bg-black/40 justify-center items-center px-6">
-              <View className="bg-white w-full rounded-xl p-4">
-                <Text className="text-lg font-semibold text-[#131E46] mb-2">Selecione a data</Text>
-                <DateTimePicker
-                  value={tempDate}
-                  mode="date"
-                  display="spinner"
-                  onChange={(_, d) => {
-                    if (d) setTempDate(d);
-                  }}
-                />
-
-                <View className="flex-row justify-end mt-4">
-                  <TouchableOpacity
-                    onPress={() => {
-                      setShowDatePicker(false);
-                    }}
-                    className="px-4 py-2 mr-2 rounded bg-gray-200"
-                  >
-                    <Text>Cancelar</Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    onPress={() => {
-                      setShowDatePicker(false);
-                      setDate(tempDate);
-                      const dd = String(tempDate.getDate()).padStart(2, '0');
-                      const mm = String(tempDate.getMonth() + 1).padStart(2, '0');
-                      const yyyy = tempDate.getFullYear();
-                      setDateText(`${dd}/${mm}/${yyyy}`);
-                    }}
-                    className="px-4 py-2 rounded bg-[#131E46]"
-                  >
-                    <Text className="text-white">Manter</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </View>
-          </Modal>
+          <DateTimePicker
+            value={tempDate}
+            mode="date"
+            display="default"
+            onChange={(_, d) => {
+              if (d) {
+                setShowDatePicker(false);
+                setDate(d);
+                const dd = String(d.getDate()).padStart(2, '0');
+                const mm = String(d.getMonth() + 1).padStart(2, '0');
+                const yyyy = d.getFullYear();
+                setDateText(`${dd}/${mm}/${yyyy}`);
+              }
+            }}
+          />
         )}
-
       </View>
     </Modal>
   );
