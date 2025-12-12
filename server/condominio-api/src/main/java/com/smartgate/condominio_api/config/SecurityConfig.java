@@ -4,6 +4,7 @@ import com.smartgate.condominio_api.security.JwtAuthFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -30,35 +31,50 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                // 1. ADICIONEI ESTA LINHA AQUI (Habilita o CORS)
+                // Configuração de CORS (Permite conexão com Frontend)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-
+                
+                // Desabilita CSRF (Padrão para APIs REST Stateless)
                 .csrf(csrf -> csrf.disable())
+                
+                // Define que não haverá sessão no servidor (Stateless)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                
+                // Configura as permissões de acesso
                 .authorizeHttpRequests(auth -> auth
+                        // 1. REGRA ESPECÍFICA PARA O EMAIL (Método GET)
+                        .requestMatchers(HttpMethod.GET, "/v1/auth/confirm").permitAll()
+                        
+                        // 2. Outras rotas públicas
                         .requestMatchers(
-                                "/v1/auth/**",
+                                "/v1/auth/**",       // Login e Registro
                                 "/v1/user/**",
                                 "/v1/meetings/**",
                                 "/v1/expenses/**",
-                                "/v3/api-docs/**",
-                                "/swagger-ui/**",
+                                "/v3/api-docs/**",   // Swagger Docs
+                                "/swagger-ui/**",    // Swagger UI
                                 "/swagger-ui.html"
                         ).permitAll()
+                        
+                        // 3. Qualquer outra rota exige autenticação (Token JWT)
                         .anyRequest().authenticated()
                 )
+                // Adiciona o filtro de JWT antes do filtro padrão de usuário/senha
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
-    // 2. ADICIONEI ESTA FUNÇÃO INTEIRA (Configura para liberar geral)
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(List.of("*")); // Libera qualquer origem (Frontend, Postman, etc)
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        // Permite qualquer origem (Frontend React, Postman, Mobile, etc)
+        configuration.setAllowedOriginPatterns(List.of("*"));
+        // Métodos permitidos
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+        // Headers permitidos
         configuration.setAllowedHeaders(List.of("*"));
+        // Permite credenciais (Cookies, Authorization Headers)
         configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
