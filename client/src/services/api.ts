@@ -1,74 +1,36 @@
-import { db } from './mockDatabase';
+import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export const login = (email, password) => {
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      const user = db.users.find((user) => user.email.toLowerCase() === email.toLowerCase());
+const BASE_URL = 'https://smartgateapp-production.up.railway.app/v1';
 
-      if (!user) {
-        reject(new Error('Email ou senha inválidos.'));
-        return;
-      }
+const api = axios.create({
+  baseURL: BASE_URL,
+});
 
-      if (user.password !== password) {
-        reject(new Error('Email ou senha inválidos.'));
-        return;
-      }
+api.interceptors.request.use(async (config) => {
+  const token = await AsyncStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
 
-      resolve({
-        token: 'fake-jwt-token-123456789',
-        user: {
-          id: user.id,
-          name: user.firstName,
-          email: user.email,
-        },
-      });
-    }, 1000);
-  });
+export const login = async (email: string, password: string) => {
+  const response = await api.post('/auth/login', { email, password });
+  await AsyncStorage.setItem('token', response.data.token);
+  return response.data;
 };
 
-export const register = (firstName, lastName, dateOfBirth, email, password) => {
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      const emailExists = db.users.find((u) => u.email === email);
+export const register = async (dados: any) => {
 
-      if (emailExists) {
-        reject(new Error('Este e-mail já está cadastrado.'));
-        return;
-      }
+  const [dia, mes, ano] = dados.dateOfBirth.split('/');
+  const dataFormatada = `${ano}-${mes}-${dia}`;
 
-      const newUser = {
-        id: db.users.length + 1,
-        firstName,
-        lastName,
-        dateOfBirth,
-        email,
-        password,
-      };
-
-      db.users.push(newUser);
-
-      console.log('Banco Atualizado:', db.users);
-
-      resolve(newUser);
-    }, 1000);
+  const response = await api.post('/auth/register', {
+    ...dados,
+    dateOfBirth: dataFormatada
   });
+  return response.data;
 };
 
-export const updateUser = (id, newData) => {
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      const index = db.users.findIndex((u) => u.id === id);
-      
-      if (index === -1) {
-        reject(new Error('Usuário não encontrado.'));
-        return;
-      }
-
-      db.users[index] = { ...db.users[index], ...newData };
-      
-      console.log('Usuário Atualizado:', db.users[index]);
-      resolve(db.users[index]);
-    }, 1000);
-  });
-};
+export default api;

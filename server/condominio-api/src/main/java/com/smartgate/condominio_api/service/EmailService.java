@@ -19,7 +19,7 @@ public class EmailService {
     @Value("${spring.mail.username}")
     private String senderEmail;
 
-    @Async // Executa em uma thread separada para não travar a API
+    // @Async // Executa em uma thread separada para não travar a API
     public void send(String to, String emailContent) {
         try {
             MimeMessage mimeMessage = mailSender.createMimeMessage();
