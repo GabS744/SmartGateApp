@@ -2,13 +2,12 @@ package com.smartgate.condominio_api.controller;
 
 import com.smartgate.condominio_api.request.LoginRequest;
 import com.smartgate.condominio_api.request.RegisterRequest;
+import com.smartgate.condominio_api.response.LoginResponse; // Import adicionado
 import com.smartgate.condominio_api.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Map;
 
 @RestController
 @RequestMapping("v1/auth")
@@ -17,9 +16,9 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("login")
-    public ResponseEntity<Object> login(@RequestBody LoginRequest request) {
-        String token = authService.login(request);
-        return ResponseEntity.ok(Map.of("token", token));
+    public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest request) {
+        // Retorna diretamente o LoginResponse
+        return ResponseEntity.ok(authService.login(request));
     }
 
     @PostMapping("register")
@@ -32,5 +31,4 @@ public class AuthController {
     public ResponseEntity<String> confirm(@RequestParam("token") String token) {
         return ResponseEntity.ok(authService.confirmToken(token));
     }
-
 }

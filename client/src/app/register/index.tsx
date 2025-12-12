@@ -9,7 +9,6 @@ import { useRouter } from 'expo-router';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import Button from '@/components/Button';
 import { register } from '@/services/api';
-
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
 export default function Register() {
@@ -153,11 +152,11 @@ export default function Register() {
           )}
 
           <Button
-            title={isLoading ? 'Cadastrando...' : 'Cadastrar'}
+            title="Cadastrar"
+            isLoading={isLoading}
             className="mt-4 w-full"
             noUnderline={true}
             onPress={handleContinue}
-            disabled={isLoading}
           />
 
           <Button

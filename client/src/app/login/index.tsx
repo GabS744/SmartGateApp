@@ -1,5 +1,5 @@
 import '../../../global.css';
-import { View, Text, ScrollView } from 'react-native'; // Adicionei ScrollView para telas pequenas
+import { View, Text } from 'react-native';
 import InputField from '@/components/InputField';
 import { Link, useRouter } from 'expo-router';
 import Button from '@/components/Button';
@@ -8,6 +8,7 @@ import { useState } from 'react';
 import { login } from '@/services/api';
 import { Mail, Lock } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -37,11 +38,13 @@ export default function Login() {
 
   return (
     <SafeAreaView className="flex-1 bg-[#F2F3FB]">
-      <ScrollView contentContainerStyle={{ flexGrow: 1, alignItems: 'center' }}>
-        {/* Cabeçalho com Shape */}
-        <Shape height={240} width="100%">
-          {/* Você pode colocar algo dentro do Shape se necessário, ou deixar vazio */}
-        </Shape>
+      <KeyboardAwareScrollView
+        contentContainerStyle={{ flexGrow: 1, alignItems: 'center' }}
+        enableOnAndroid={true}
+        extraScrollHeight={20}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}>
+        <Shape height={240} width="100%"></Shape>
 
         <View className="-mt-10 w-full items-center px-8">
           <Text className="pb-8 text-5xl font-bold text-[#283B7D]">Login</Text>
@@ -72,11 +75,11 @@ export default function Login() {
           </View>
 
           <Button
-            title={isLoading ? 'Entrando...' : 'Entrar'}
+            title="Entrar"
             className="mb-4 w-full"
             noUnderline={true}
             onPress={handleLogin}
-            disabled={isLoading}
+            isLoading={isLoading}
           />
 
           <Button
@@ -88,7 +91,7 @@ export default function Login() {
             onPress={() => router.push('/register')}
           />
         </View>
-      </ScrollView>
+      </KeyboardAwareScrollView>
     </SafeAreaView>
   );
 }

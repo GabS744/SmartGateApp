@@ -17,18 +17,28 @@ api.interceptors.request.use(async (config) => {
 
 export const login = async (email: string, password: string) => {
   const response = await api.post('/auth/login', { email, password });
+
+  // Salva o token
   await AsyncStorage.setItem('token', response.data.token);
+
+  // Salva o nome e a role se existirem na resposta
+  if (response.data.name) {
+    await AsyncStorage.setItem('userName', response.data.name);
+  }
+  if (response.data.role) {
+    await AsyncStorage.setItem('userRole', response.data.role);
+  }
+
   return response.data;
 };
 
 export const register = async (dados: any) => {
-
   const [dia, mes, ano] = dados.dateOfBirth.split('/');
   const dataFormatada = `${ano}-${mes}-${dia}`;
 
   const response = await api.post('/auth/register', {
     ...dados,
-    dateOfBirth: dataFormatada
+    dateOfBirth: dataFormatada,
   });
   return response.data;
 };

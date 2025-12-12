@@ -7,6 +7,7 @@ import com.smartgate.condominio_api.repository.ConfirmationTokenRepository;
 import com.smartgate.condominio_api.repository.UserRepository;
 import com.smartgate.condominio_api.request.LoginRequest;
 import com.smartgate.condominio_api.request.RegisterRequest;
+import com.smartgate.condominio_api.response.LoginResponse; // Import adicionado
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -30,7 +31,8 @@ public class AuthService {
     @Value("${app.base-url:http://localhost:8080}")
     private String baseUrl;
 
-    public String login(LoginRequest loginRequest) {
+    // Retorno alterado de String para LoginResponse
+    public LoginResponse login(LoginRequest loginRequest) {
         User user = userRepository.findByEmail(loginRequest.getEmail())
                 .orElseThrow(InvalidCredentialsException::new);
 
@@ -42,12 +44,14 @@ public class AuthService {
             throw new IllegalStateException("Conta não ativada. Por favor, verifique seu e-mail.");
         }
 
-        return jwtService.generateToken(user);
+        String token = jwtService.generateToken(user);
+        
+        // Retorna o token junto com o nome e a role
+        return new LoginResponse(token, user.getFullName(), user.getRole());
     }
 
     @Transactional(timeout = 60)
     public void register(RegisterRequest registerRequest) {
-
         if (!registerRequest.getPassword().equals(registerRequest.getConfirmPassword())) {
             throw new IllegalArgumentException("As senhas não coincidem");
         }
@@ -67,7 +71,6 @@ public class AuthService {
             } catch (Exception e) {
                 System.err.println("⚠️ AVISO: Erro ao reenviar token: " + e.getMessage());
                 e.printStackTrace();
-                // Não falha o registro, mas loga o erro
             }
             return;
         }
@@ -90,8 +93,6 @@ public class AuthService {
         } catch (Exception e) {
             System.err.println("⚠️ AVISO: Usuário criado mas erro ao enviar e-mail: " + e.getMessage());
             e.printStackTrace();
-            // O usuário foi criado com sucesso, mas o e-mail falhou
-            // Em produção, você poderia adicionar este e-mail em uma fila de retry
         }
     }
 
@@ -108,7 +109,6 @@ public class AuthService {
 
         confirmationTokenRepository.save(token);
 
-        // Usa a URL base configurável (Railway ou localhost)
         String link = baseUrl + "/v1/auth/confirm?token=" + tokenUuid;
 
         System.out.println("🔗 Link de confirmação: " + link);
