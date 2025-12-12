@@ -1,52 +1,75 @@
 package com.smartgate.condominio_api.service;
-
-import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class EmailService {
 
-    private final JavaMailSender mailSender;
+    @Value("${brevo.api.key}")
+    private String brevoApiKey;
 
     @Value("${spring.mail.username}")
     private String senderEmail;
 
     public void send(String to, String emailContent) {
+        log.info("🔵 [Brevo] A preparar envio para: {}", to);
+
         try {
-            System.out.println("🔵 Iniciando envio de e-mail...");
-            System.out.println("   FROM: " + senderEmail);
-            System.out.println("   TO: " + to);
-            
-            MimeMessage mimeMessage = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, "utf-8");
+            // URL da API v3 da Brevo para envio de emails transacionais
+            String url = "https://api.brevo.com/v3/smtp/email";
+            RestTemplate restTemplate = new RestTemplate();
 
-            helper.setText(emailContent, true);
-            helper.setTo(to);
-            helper.setSubject("Confirme seu cadastro - SmartGate");
-            helper.setFrom(senderEmail);
+            // 1. Configurar Headers (Autenticação e Tipo de Conteúdo)
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.set("api-key", brevoApiKey); // O cabeçalho correto é 'api-key'
 
-            System.out.println("📤 Enviando mensagem via SMTP...");
-            mailSender.send(mimeMessage);
+            // 2. Montar o Corpo da Requisição (JSON)
+            Map<String, Object> body = new HashMap<>();
             
-            System.out.println("✅ E-mail enviado com sucesso para: " + to);
+            // Remetente (Sender)
+            Map<String, String> sender = new HashMap<>();
+            sender.put("name", "SmartGate App");
+            sender.put("email", senderEmail);
+            body.put("sender", sender);
 
-        } catch (MessagingException e) {
-            System.err.println("❌ ERRO MESSAGING: " + e.getMessage());
-            System.err.println("   Classe: " + e.getClass().getName());
-            e.printStackTrace();
-            throw new IllegalStateException("Falha ao enviar email: " + e.getMessage(), e);
-            
+            // Destinatário (To) - A API espera uma lista
+            Map<String, String> toAddress = new HashMap<>();
+            toAddress.put("email", to);
+            body.put("to", Collections.singletonList(toAddress));
+
+            // Conteúdo (Assunto + HTML)
+            body.put("subject", "Confirme o seu cadastro - SmartGate");
+            body.put("htmlContent", emailContent);
+
+            // 3. Enviar Requisição HTTP POST
+            HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
+            ResponseEntity<String> response = restTemplate.postForEntity(url, request, String.class);
+
+            // 4. Validar Resposta
+            if (response.getStatusCode().is2xxSuccessful()) {
+                log.info("✅ [Brevo] E-mail enviado com sucesso! ID da mensagem: {}", response.getBody());
+            } else {
+                log.error("❌ [Brevo] Falha ao enviar. Status: {}", response.getStatusCode());
+                log.error("   Resposta da API: {}", response.getBody());
+            }
+
         } catch (Exception e) {
-            System.err.println("❌ ERRO INESPERADO: " + e.getMessage());
-            System.err.println("   Classe: " + e.getClass().getName());
+            log.error("❌ [Brevo] Erro na conexão com a API: {}", e.getMessage());
             e.printStackTrace();
-            throw new IllegalStateException("Erro inesperado ao enviar email: " + e.getMessage(), e);
         }
     }
 }
