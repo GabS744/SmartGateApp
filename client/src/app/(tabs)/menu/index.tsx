@@ -68,22 +68,26 @@ export default function Menu() {
     const loadEvents = async () => {
       try {
         setLoading(true);
+        // 1. Buscar Reuniões
         const meetingsData = await getUpcomingMeetings();
 
         const formattedEvents: EventType[] = meetingsData.map((meeting: any) => ({
-          id: meeting.id,
-          title: meeting.title,
+          id: meeting.idMeeting, // Ajustado para idMeeting
+          title: meeting.name, // Ajustado: Backend manda 'name', não 'title'
           date: meeting.meetingDate,
-          time: meeting.meetingTime,
-          shortDate: meeting.meetingDate ? meeting.meetingDate.split('-').slice(1).join('/') : '',
+          time: meeting.meetingTime ? meeting.meetingTime.slice(0, 5) : '', // Ajustado: Corta para HH:mm
+          shortDate: meeting.meetingDate
+            ? meeting.meetingDate.split('-').slice(1).reverse().join('/')
+            : '', // Ajustado para dia/mês
           location: meeting.location || 'Condomínio',
-          createdBy: meeting.createdBy || 'Admin',
+          createdBy: meeting.publisherName || 'Admin', // Tenta pegar nome do criador
           description: meeting.description || '',
           fullDate: meeting.meetingDate || '',
         }));
 
         setEvents(formattedEvents);
 
+        // 2. Buscar Gastos
         const today = new Date();
         const currentMonth = String(today.getMonth() + 1).padStart(2, '0');
         const currentYear = String(today.getFullYear());
@@ -160,10 +164,7 @@ export default function Menu() {
               label="Eventos"
               onPress={() => router.push('/eventsReunion/page')}
             />
-            <RoundIconBtn
-              icon={MessageCircleQuestionMark} 
-              label="Suporte" 
-              onPress={() => router.push('/faq/page')}/>
+            <RoundIconBtn icon={MessageCircleQuestionMark} label="Suporte" />
           </ScrollView>
         </View>
 

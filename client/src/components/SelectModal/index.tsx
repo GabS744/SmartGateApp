@@ -25,22 +25,14 @@ export default function SelectModal({
   onClose,
 }: SelectModalProps) {
   return (
-    <Modal
-      animationType="slide"
-      transparent={true}
-      visible={visible}
-      onRequestClose={onClose}
-    >
+    <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
       <SafeAreaView className="flex-1 bg-black/50">
         <View className="flex-1 justify-end">
           <View className="h-[60%] w-full rounded-t-3xl bg-[#F2F3FB] p-6">
             {/* Header */}
             <View className="mb-6 flex-row items-center justify-between">
               <Text className="text-2xl font-bold text-[#131E46]">{title}</Text>
-              <TouchableOpacity
-                onPress={onClose}
-                className="rounded-full bg-white p-2"
-              >
+              <TouchableOpacity onPress={onClose} className="rounded-full bg-white p-2">
                 <X size={24} color="#131E46" />
               </TouchableOpacity>
             </View>
@@ -48,8 +40,7 @@ export default function SelectModal({
             {/* Options */}
             <ScrollView
               showsVerticalScrollIndicator={false}
-              contentContainerStyle={{ paddingBottom: 20 }}
-            >
+              contentContainerStyle={{ paddingBottom: 20 }}>
               {options.map((option) => (
                 <TouchableOpacity
                   key={option.value}
@@ -59,18 +50,13 @@ export default function SelectModal({
                   }}
                   className="mb-3 flex-row items-center justify-between rounded-lg border-2 bg-white p-4"
                   style={{
-                    borderColor:
-                      selectedValue === option.value ? '#283B7D' : '#E5E7EB',
-                  }}
-                >
+                    borderColor: selectedValue === option.value ? '#283B7D' : '#E5E7EB',
+                  }}>
                   <View className="flex-1">
                     <Text
                       className={`text-lg font-semibold ${
-                        selectedValue === option.value
-                          ? 'text-[#283B7D]'
-                          : 'text-[#131E46]'
-                      }`}
-                    >
+                        selectedValue === option.value ? 'text-[#283B7D]' : 'text-[#131E46]'
+                      }`}>
                       {option.label}
                     </Text>
                   </View>

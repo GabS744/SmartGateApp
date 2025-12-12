@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, Modal, TouchableOpacity } from 'react-native';
-import { TriangleAlert , X } from 'lucide-react-native';
+import { TriangleAlert, X } from 'lucide-react-native';
 
 interface PopupConfirmProps {
   visible: boolean;
@@ -10,55 +10,36 @@ interface PopupConfirmProps {
   message?: string;
 }
 
-export function PopupConfirm({
-  visible,
-  onClose,
-  onConfirm,
-  title,
-  message,
-}: PopupConfirmProps) {
+export function PopupConfirm({ visible, onClose, onConfirm, title, message }: PopupConfirmProps) {
   return (
     <Modal transparent visible={visible} animationType="fade">
-      <View className="flex-1 bg-black/40 items-center justify-center px-6">
-        <View className="bg-[#131E46] w-72 rounded-2xl p-6 items-center shadow-lg">
-          <View className="bg-white/10 p-4 rounded-full mb-4">
+      <View className="flex-1 items-center justify-center bg-black/40 px-6">
+        <View className="w-72 items-center rounded-2xl bg-[#131E46] p-6 shadow-lg">
+          <View className="mb-4 rounded-full bg-white/10 p-4">
             <TriangleAlert size={42} color="#FFFFFF" />
           </View>
 
-
           {title && (
-            <Text className="text-white text-lg font-semibold text-center mb-2">
-              {title}
-            </Text>
+            <Text className="mb-2 text-center text-lg font-semibold text-white">{title}</Text>
           )}
 
-          {message && (
-            <Text className="text-white/90 text-center mb-6">
-              {message}
-            </Text>
-          )}
+          {message && <Text className="mb-6 text-center text-white/90">{message}</Text>}
 
-
-          <View className="flex-row gap-3 w-full">
+          <View className="w-full flex-row gap-3">
             <TouchableOpacity
               onPress={onClose}
-              className="flex-1 bg-gray-300 py-2.5 rounded-xl items-center"
-            >
-              <Text className="text-[#131E46] font-semibold">Não</Text>
+              className="flex-1 items-center rounded-xl bg-gray-300 py-2.5">
+              <Text className="font-semibold text-[#131E46]">Não</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               onPress={onConfirm}
-              className="flex-1 bg-[#283B7D] py-2.5 rounded-xl items-center"
-            >
-              <Text className="text-white font-semibold">Sim</Text>
+              className="flex-1 items-center rounded-xl bg-[#283B7D] py-2.5">
+              <Text className="font-semibold text-white">Sim</Text>
             </TouchableOpacity>
           </View>
 
-          <TouchableOpacity
-            onPress={onClose}
-            className="absolute top-3 right-3 p-1"
-          >
+          <TouchableOpacity onPress={onClose} className="absolute right-3 top-3 p-1">
             <X size={20} color="#FFFFFF99" />
           </TouchableOpacity>
         </View>

@@ -1,289 +1,203 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, Modal, TouchableOpacity, ScrollView, Alert } from 'react-native';
-import { X, Check, Plus, Calendar, Clock, MapPin, User } from 'lucide-react-native';
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  Modal,
+  TextInput,
+  TouchableOpacity,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
+  Alert,
+} from 'react-native';
+import { X, Calendar, Clock, MapPin, AlignLeft, Check } from 'lucide-react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import InputField from '../InputField';
 
-export type EventFormData = {
+export interface EventFormData {
   title: string;
-  fullDate?: string; // formatted date string (pt-BR)
+  fullDate: string;
   time: string;
   location: string;
-  createdBy: string;
   description: string;
-};
+}
 
-type Props = {
+interface EventCreateModalProps {
   visible: boolean;
   onClose: () => void;
   onSave: (data: EventFormData) => void;
-  initialData?: EventFormData | null;
-};
+  initialData?: any;
+}
 
-export default function EventCreateModal({ visible, onClose, onSave, initialData }: Props) {
+export default function EventCreateModal({
+  visible,
+  onClose,
+  onSave,
+  initialData,
+}: EventCreateModalProps) {
   const [title, setTitle] = useState('');
-  const [date, setDate] = useState<Date | null>(null);
-  const [dateText, setDateText] = useState('');
-  const [time, setTime] = useState('');
   const [location, setLocation] = useState('');
-  const [createdBy, setCreatedBy] = useState('');
   const [description, setDescription] = useState('');
 
+  const [dateObj, setDateObj] = useState<Date>(new Date());
+  const [timeObj, setTimeObj] = useState<Date>(new Date());
+
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [tempDate, setTempDate] = useState<Date>(new Date());
+  const [showTimePicker, setShowTimePicker] = useState(false);
 
   useEffect(() => {
     if (visible) {
       if (initialData) {
         setTitle(initialData.title || '');
-        setTime(initialData.time || '');
         setLocation(initialData.location || '');
-        setCreatedBy(initialData.createdBy || '');
         setDescription(initialData.description || '');
-        if (initialData.fullDate) {
-          const parts = initialData.fullDate.split('/');
-          if (parts.length === 3) {
-            const d = new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
-            if (!isNaN(d.getTime())) setDate(d);
-            setDateText(initialData.fullDate);
-          } else {
-            setDate(new Date());
-            setDateText('');
-          }
-        } else {
-          setDate(null);
-          setDateText('');
-        }
+        setDateObj(new Date());
+        setTimeObj(new Date());
       } else {
         setTitle('');
-        setDate(null);
-        setDateText('');
-        setTime('');
         setLocation('');
-        setCreatedBy('');
         setDescription('');
+        setDateObj(new Date());
+        setTimeObj(new Date());
       }
     }
   }, [visible, initialData]);
 
-  // regex: dd/mm/yyyy (simple, years 1900-2099) and time HH:MM (00-23:00-59)
-  const DATE_REGEX = /^(0[1-9]|[12]\d|3[01])\/(0[1-9]|1[0-2])\/(19|20)\d{2}$/;
-  const TIME_REGEX = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
-  const TITLE_REGEX = /^.{3,}$/;
-  const CREATED_BY_REGEX = /^[^\d]+$/; // no digits in name
-  const LOCATION_REGEX = /^.{2,}$/;
-  const DESCRIPTION_REGEX = /^.{5,}$/;
-
-  const parseDateFromText = (text: string): Date | null => {
-    const parts = text.split('/');
-    if (parts.length !== 3) return null;
-    const day = Number(parts[0]);
-    const month = Number(parts[1]);
-    const year = Number(parts[2]);
-    const d = new Date(year, month - 1, day);
-    if (isNaN(d.getTime())) return null;
-    // basic sanity: formatted back should match (avoids 31/02 becoming March)
-    const dd = String(d.getDate()).padStart(2, '0');
-    const mm = String(d.getMonth() + 1).padStart(2, '0');
-    const yyyy = String(d.getFullYear());
-    return dd === parts[0] && mm === parts[1] && yyyy === parts[2] ? d : null;
-  };
-
-  const validate = (): string | null => {
-    if (!title.trim()) return 'Título é obrigatório.';
-    if (!TITLE_REGEX.test(title.trim())) return 'Título deve ter ao menos 3 caracteres.';
-    // allow either a selected date or a valid typed date
-    if (!date && !dateText) return 'Data é obrigatória.';
-    if (!date && dateText && !DATE_REGEX.test(dateText.trim()))
-      return 'Data deve estar no formato DD/MM/AAAA.';
-    if (!time.trim()) return 'Hora é obrigatória.';
-    if (!TIME_REGEX.test(time.trim())) return 'Hora deve estar no formato HH:MM (00-23:59).';
-    if (!location.trim()) return 'Local é obrigatório.';
-    if (!LOCATION_REGEX.test(location.trim())) return 'Local deve ter ao menos 2 caracteres.';
-    if (!createdBy.trim()) return 'Responsável é obrigatório.';
-    if (!CREATED_BY_REGEX.test(createdBy.trim()))
-      return 'Nome do responsável não pode conter números.';
-    if (!description.trim()) return 'Descrição é obrigatória.';
-    if (!DESCRIPTION_REGEX.test(description.trim()))
-      return 'Descrição deve ter ao menos 5 caracteres.';
-
-    return null;
-  };
-
   const handleSave = () => {
-    const err = validate();
-    if (err) {
-      Alert.alert('Erro', err);
+    if (!title.trim() || !location.trim()) {
+      Alert.alert('Erro', 'Por favor preencha o Título e o Local.');
       return;
     }
 
-    // if user typed a valid date, prefer that
-    let finalDate: Date | null = date;
-    if (!finalDate && dateText) {
-      const parsed = parseDateFromText(dateText.trim());
-      if (parsed) finalDate = parsed;
-    }
-    const fullDate = finalDate ? finalDate.toLocaleDateString('pt-BR') : undefined;
+    const day = String(dateObj.getDate()).padStart(2, '0');
+    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const year = dateObj.getFullYear();
+    const formattedDate = `${day}/${month}/${year}`;
 
-    const data: EventFormData = {
-      title: title.trim(),
-      fullDate,
-      time: time.trim(),
-      location: location.trim(),
-      createdBy: createdBy.trim(),
-      description: description.trim(),
-    };
+    const hours = String(timeObj.getHours()).padStart(2, '0');
+    const minutes = String(timeObj.getMinutes()).padStart(2, '0');
+    const formattedTime = `${hours}:${minutes}`;
 
-    // Log what will be submitted
-    console.log('Event form submit:', data);
-
-    onSave(data);
-    onClose();
-  };
-
-  // Format time as user types: inserts ':' after 2 digits
-  const formatTimeInput = (input: string) => {
-    const digits = input.replace(/[^0-9]/g, '');
-    let out = digits;
-    if (digits.length > 2) {
-      out = digits.slice(0, 2) + ':' + digits.slice(2, 4);
-    }
-    if (out.length > 5) out = out.slice(0, 5);
-    setTime(out);
+    onSave({
+      title,
+      fullDate: formattedDate,
+      time: formattedTime,
+      location,
+      description,
+    });
   };
 
   return (
-    <Modal visible={visible} transparent animationType="fade">
-      <View className="flex-1 items-center justify-center bg-black/40 px-6">
-        <View className="w-full rounded-xl bg-white p-5">
-          <View className="mb-3 flex-row items-center justify-between">
-            <Text className="mb-1 text-2xl font-bold text-[#283B7D]">
-              {initialData ? 'Editar Evento' : 'Adicionar Evento'}
-            </Text>
-            <TouchableOpacity onPress={onClose}>
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+      <View className="flex-1 justify-end bg-black/50">
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          className="h-[85%] w-full rounded-t-3xl bg-[#F2F3FB]">
+          <View className="flex-row items-center justify-between rounded-t-3xl border-b border-gray-200 bg-white p-6">
+            <Text className="text-xl font-bold text-[#283B7D]">Nova Reunião</Text>
+            <TouchableOpacity onPress={onClose} className="rounded-full bg-gray-100 p-2">
               <X size={20} color="#131E46" />
             </TouchableOpacity>
           </View>
 
-          <ScrollView
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ paddingBottom: 20 }}>
+          <ScrollView className="flex-1 p-6" showsVerticalScrollIndicator={false}>
             <View className="mb-4">
-              <View className="mb-1 flex-row">
-                <Text className="font-bold text-[#131E46]">Título</Text>
-                <Text className="text-red-500">*</Text>
-              </View>
-              <InputField
-                bgColor="white"
-                placeholder="Título do evento"
+              <Text className="mb-2 ml-1 font-bold text-[#131E46]">Título da Reunião</Text>
+              <TextInput
+                className="rounded-xl border border-gray-200 bg-white p-4 text-[#131E46]"
+                placeholder="Ex: Assembleia Geral"
+                placeholderTextColor="#9CA3AF"
                 value={title}
                 onChangeText={setTitle}
               />
             </View>
 
-            <View className="mb-4">
-              <View className="mb-1 flex-col justify-between">
-                <View className="flex-row items-center">
-                  <Text className="ml-2 font-bold text-[#131E46]">Data</Text>
-                  <Text className="text-red-500">*</Text>
-                </View>
-
+            <View className="mb-4 flex-row gap-4">
+              <View className="flex-1">
+                <Text className="mb-2 ml-1 font-bold text-[#131E46]">Data</Text>
                 <TouchableOpacity
-                  onPress={() => {
-                    const start = date || new Date();
-                    setTempDate(start);
-                    setShowDatePicker(true);
-                  }}
-                  className="ml-1 mr-1 mt-2 rounded-lg border border-[#283B7D] bg-white px-2 py-2 ">
-                  <Calendar size={16} color="#131E46" />
+                  onPress={() => setShowDatePicker(true)}
+                  className="flex-row items-center gap-2 rounded-xl border border-gray-200 bg-white p-4">
+                  <Calendar size={20} color="#283B7D" />
+                  <Text className="text-[#131E46]">{dateObj.toLocaleDateString('pt-BR')}</Text>
+                </TouchableOpacity>
+              </View>
+
+              <View className="flex-1">
+                <Text className="mb-2 ml-1 font-bold text-[#131E46]">Horário</Text>
+                <TouchableOpacity
+                  onPress={() => setShowTimePicker(true)}
+                  className="flex-row items-center gap-2 rounded-xl border border-gray-200 bg-white p-4">
+                  <Clock size={20} color="#283B7D" />
+                  <Text className="text-[#131E46]">
+                    {`${String(timeObj.getHours()).padStart(2, '0')}:${String(timeObj.getMinutes()).padStart(2, '0')}`}
+                  </Text>
                 </TouchableOpacity>
               </View>
             </View>
 
-            <View className="mb-4">
-              <View className="mb-1 flex-row">
-                <Clock size={16} color="#131E46" />
-                <Text className="ml-2 font-bold text-[#131E46]">Hora</Text>
-                <Text className="text-red-500">*</Text>
-              </View>
-              <InputField
-                bgColor="white"
-                placeholder="__:__"
-                value={time}
-                onChangeText={formatTimeInput}
-                keyboardType="numeric"
+            {showDatePicker && (
+              <DateTimePicker
+                value={dateObj}
+                mode="date"
+                display="spinner"
+                onChange={(event, selectedDate) => {
+                  setShowDatePicker(false);
+                  if (selectedDate) setDateObj(selectedDate);
+                }}
               />
-            </View>
+            )}
+
+            {showTimePicker && (
+              <DateTimePicker
+                value={timeObj}
+                mode="time"
+                is24Hour={true}
+                display="spinner"
+                onChange={(event, selectedTime) => {
+                  setShowTimePicker(false);
+                  if (selectedTime) setTimeObj(selectedTime);
+                }}
+              />
+            )}
 
             <View className="mb-4">
-              <View className="mb-1 flex-row">
-                <MapPin size={16} color="#131E46" />
-                <Text className="ml-2 font-bold text-[#131E46]">Local</Text>
-                <Text className="text-red-500">*</Text>
+              <Text className="mb-2 ml-1 font-bold text-[#131E46]">Local</Text>
+              <View className="flex-row items-center rounded-xl border border-gray-200 bg-white px-4">
+                <MapPin size={20} color="#9CA3AF" />
+                <TextInput
+                  className="flex-1 p-4 text-[#131E46]"
+                  placeholder="Ex: Salão de Festas"
+                  placeholderTextColor="#9CA3AF"
+                  value={location}
+                  onChangeText={setLocation}
+                />
               </View>
-              <InputField
-                bgColor="white"
-                placeholder="Local do evento"
-                value={location}
-                onChangeText={setLocation}
-              />
-            </View>
-
-            <View className="mb-4">
-              <View className="mb-1 flex-row">
-                <User size={16} color="#131E46" />
-                <Text className="ml-2 font-bold text-[#131E46]">Responsável</Text>
-                <Text className="text-red-500">*</Text>
-              </View>
-              <InputField
-                bgColor="white"
-                placeholder="Nome do responsável"
-                value={createdBy}
-                onChangeText={setCreatedBy}
-              />
             </View>
 
             <View className="mb-6">
-              <Text className="mb-1 font-bold text-[#131E46]">Descrição</Text>
-              <InputField
-                bgColor="white"
-                placeholder="Descrição"
-                value={description}
-                onChangeText={setDescription}
-                multiline
-                numberOfLines={4}
-              />
+              <Text className="mb-2 ml-1 font-bold text-[#131E46]">Descrição / Pauta</Text>
+              <View className="flex-row items-start rounded-xl border border-gray-200 bg-white px-4 py-2">
+                <AlignLeft size={20} color="#9CA3AF" style={{ marginTop: 12 }} />
+                <TextInput
+                  className="h-24 flex-1 p-2 text-[#131E46]"
+                  placeholder="Detalhes da reunião..."
+                  placeholderTextColor="#9CA3AF"
+                  multiline
+                  textAlignVertical="top"
+                  value={description}
+                  onChangeText={setDescription}
+                />
+              </View>
             </View>
 
             <TouchableOpacity
               onPress={handleSave}
-              accessibilityRole="button"
-              className="w-full flex-row items-center justify-center rounded-lg bg-[#131E46] py-3">
-              {initialData ? <Check size={18} color="#FFF" /> : <Plus size={18} color="#FFF" />}
-              <Text className="ml-2 text-lg font-bold text-white">
-                {initialData ? 'Salvar' : 'Adicionar'}
-              </Text>
+              className="mb-10 w-full flex-row items-center justify-center rounded-xl bg-[#283B7D] py-4 shadow-sm">
+              <Check size={20} color="#FFF" />
+              <Text className="ml-2 text-lg font-bold text-white">Agendar Reunião</Text>
             </TouchableOpacity>
           </ScrollView>
-        </View>
-
-        {showDatePicker && (
-          <DateTimePicker
-            value={tempDate}
-            mode="date"
-            display="default"
-            onChange={(_, d) => {
-              if (d) {
-                setShowDatePicker(false);
-                setDate(d);
-                const dd = String(d.getDate()).padStart(2, '0');
-                const mm = String(d.getMonth() + 1).padStart(2, '0');
-                const yyyy = d.getFullYear();
-                setDateText(`${dd}/${mm}/${yyyy}`);
-              }
-            }}
-          />
-        )}
+        </KeyboardAvoidingView>
       </View>
     </Modal>
   );

@@ -10,14 +10,13 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ChevronDown, TrendingUp, TrendingDown, Wallet, X, Plus } from 'lucide-react-native';
+import { ChevronDown, X, Plus } from 'lucide-react-native';
 
 import ExpenseCard from '@/components/ExpenseCard';
 import ExpenseDetailsModal, { ExpenseData } from '@/components/ExpenseDetailsModal';
 import ExpenseFormModal from '@/components/ExpenseFormModal';
 import {
   getExpenses,
-  getFinancialSummary,
   deleteExpense,
   createExpense,
   updateExpense,
@@ -35,7 +34,7 @@ const formatDate = (dateString: string) => {
 };
 
 const mapStatus = (status: string) => {
-  const s = status.toUpperCase();
+  const s = status ? status.toUpperCase() : 'PENDING';
   if (s === 'PAID') return 'Pago';
   if (s === 'PENDING') return 'Pendente';
   if (s === 'FUTURE') return 'Futuro';
@@ -45,12 +44,6 @@ const mapStatus = (status: string) => {
 export default function GastosScreen() {
   const [expensesList, setExpensesList] = useState<ExpenseData[]>([]);
   const [loading, setLoading] = useState(false);
-
-  const [summary, setSummary] = useState({
-    totalRevenue: 0,
-    totalExpense: 0,
-    balance: 0,
-  });
 
   const [viewModalData, setViewModalData] = useState<ExpenseData | null>(null);
   const [formModalVisible, setFormModalVisible] = useState(false);
@@ -69,6 +62,7 @@ export default function GastosScreen() {
 
     setLoading(true);
     try {
+      // Busca apenas a lista de despesas
       const expensesData = await getExpenses(selectedMonth, selectedYear);
 
       const formattedList: ExpenseData[] = expensesData.map((item: any) => ({
@@ -83,16 +77,8 @@ export default function GastosScreen() {
         rawDate: item.expenseDate,
       }));
       setExpensesList(formattedList);
-
-      const summaryData = await getFinancialSummary(selectedMonth, selectedYear);
-      setSummary({
-        totalRevenue: summaryData.totalRevenue || 0,
-        totalExpense: summaryData.totalExpense || 0,
-        balance: summaryData.balance || 0,
-      });
     } catch (_error: any) {
       console.error('Erro ao buscar gastos:', _error);
-      // Alert.alert("Erro", "Não foi possível carregar os dados."); // Descomente para debugar
     } finally {
       setLoading(false);
     }
@@ -174,7 +160,6 @@ export default function GastosScreen() {
     { label: 'Dezembro', value: '12' },
   ];
   const years = ['2024', '2025', '2026'];
-
   const currentMonthLabel = months.find((m) => m.value === selectedMonth)?.label || 'Selecione';
 
   return (
@@ -184,10 +169,11 @@ export default function GastosScreen() {
         showsVerticalScrollIndicator={false}>
         <Text className="mb-6 text-3xl font-bold text-[#283B7D]">Gastos do Condomínio</Text>
 
+        {/* Filtros de Data */}
         <View className="mb-6 flex-row gap-4">
           <TouchableOpacity
             onPress={() => setFilterModalVisible('month')}
-            className="flex-1 flex-row items-center justify-between rounded-lg bg-white px-4 py-3 shadow-sm border border-[#283B7D]">
+            className="flex-1 flex-row items-center justify-between rounded-lg border border-[#283B7D] bg-white px-4 py-3 shadow-sm">
             <Text className="font-bold text-[#131E46]" numberOfLines={1}>
               {currentMonthLabel}
             </Text>
@@ -195,44 +181,13 @@ export default function GastosScreen() {
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => setFilterModalVisible('year')}
-            className="w-28 flex-row items-center justify-between rounded-lg bg-white px-4 py-3 shadow-sm border border-[#283B7D]">
+            className="w-28 flex-row items-center justify-between rounded-lg border border-[#283B7D] bg-white px-4 py-3 shadow-sm">
             <Text className="font-bold text-[#131E46]">{selectedYear}</Text>
             <ChevronDown size={20} color="#131E46" />
           </TouchableOpacity>
         </View>
 
-        <View className="mb-6 flex-row justify-between">
-          <View className="h-20 w-[30%] justify-center rounded-lg border border-[#283B7D] bg-white p-2">
-            <View className="mb-1 flex-row items-center">
-              <TrendingUp size={14} color="#10B981" />
-              <Text className="ml-1 text-[10px] font-bold text-[#283B7D]">Receitas</Text>
-            </View>
-            <Text className="text-lg font-bold text-[#131E46]">
-              R$ {formatCurrency(summary.totalRevenue)}
-            </Text>
-          </View>
-          <View className="h-20 w-[30%] justify-center rounded-lg border border-[#283B7D] bg-white p-2">
-            <View className="mb-1 flex-row items-center">
-              <TrendingDown size={14} color="#EF4444" />
-              <Text className="ml-1 text-[10px] font-bold text-[#283B7D]">Despesas</Text>
-            </View>
-            <Text className="text-lg font-bold text-[#131E46]">
-              R$ {formatCurrency(summary.totalExpense)}
-            </Text>
-          </View>
-          <View className="h-20 w-[30%] justify-center rounded-lg border border-[#283B7D] bg-white p-2">
-            <View className="mb-1 flex-row items-center">
-              <Wallet size={14} color="#3B82F6" />
-              <Text className="ml-1 text-[10px] font-bold text-[#283B7D]">Saldo</Text>
-            </View>
-            <Text className="text-lg font-bold text-[#131E46]">
-              R$ {formatCurrency(summary.balance)}
-            </Text>
-          </View>
-        </View>
-
-        <View className="mb-6 h-[2px] w-full bg-[#283B7D]/30" />
-
+        {/* Lista de Gastos */}
         <View>
           {loading ? (
             <ActivityIndicator size="large" color="#131E46" />
@@ -253,6 +208,7 @@ export default function GastosScreen() {
         </TouchableOpacity>
       </ScrollView>
 
+      {/* Modais */}
       <ExpenseDetailsModal
         visible={viewModalData !== null}
         data={viewModalData}
