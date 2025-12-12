@@ -1,5 +1,5 @@
 import '../../../global.css';
-import { View, Text } from 'react-native';
+import { View, Text, ScrollView } from 'react-native'; // Adicionei ScrollView para telas pequenas
 import InputField from '@/components/InputField';
 import { Link, useRouter } from 'expo-router';
 import Button from '@/components/Button';
@@ -7,6 +7,7 @@ import Shape from '@/components/svgs/Shape';
 import { useState } from 'react';
 import { login } from '@/services/api';
 import { Mail, Lock } from 'lucide-react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -24,16 +25,9 @@ export default function Login() {
 
     try {
       await login(email, password);
-<<<<<<< HEAD
-
       router.replace('/menu');
     } catch (error: any) {
       alert(error.message || 'Erro ao fazer login.');
-=======
-      router.replace('/menu');
-    } catch {
-      alert('Erro ao fazer login. Verifique suas credenciais e tente novamente.');
->>>>>>> fd3459fc0579aa6a32f4d08bdfacb19fc11c138b
     } finally {
       setIsLoading(false);
     }
@@ -42,45 +36,16 @@ export default function Login() {
   const iconColor = '#283B7D';
 
   return (
-    <SafeAreaView className="flex-1 items-center bg-[#F2F3FB]">
-      <Shape height={240} width="100%">
-        <Text>teste</Text>
-      </Shape>
-      <View className="w-96 items-center">
-        <Text className="p-8 text-5xl font-bold">Login</Text>
-        <InputField
-          placeholder="Digite seu e-mail..."
-          keyboardType="email-address"
-          value={email}
-          onChangeText={setEmail}
-          autoCapitalize="none"
-          icon={<Mail color={iconColor} size={25} />}
-        />
-        <InputField
-          placeholder="Digite sua senha..."
-          secureTextEntry={true}
-          value={password}
-          onChangeText={setPassword}
-          icon={<Lock color={iconColor} size={25} />}
-        />
-      </View>
-      <View className="w-96 items-end">
-        <Link href="/recover-password">
-          <Text className="text-lg font-semibold underline">Esqueceu a senha?</Text>
-        </Link>
-      </View>
-      <View className="p-16">
-        <Button
-          title={isLoading ? 'Entrando...' : 'Entrar'}
-          className="mt-4 w-96"
-          noUnderline={true}
-          onPress={handleLogin}
-          disabled={isLoading}></Button>
+    <SafeAreaView className="flex-1 bg-[#F2F3FB]">
+      <ScrollView contentContainerStyle={{ flexGrow: 1, alignItems: 'center' }}>
+        {/* Cabeçalho com Shape */}
+        <Shape height={240} width="100%">
+          {/* Você pode colocar algo dentro do Shape se necessário, ou deixar vazio */}
+        </Shape>
 
-      {/* alinhar conteúdo ao topo para evitar deslocamento para baixo em telas pequenas */}
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'flex-start', paddingHorizontal: 16, paddingTop: 20 }}>
-        <Text style={{ padding: 8, fontSize: 34, fontWeight: '700' }}>Login</Text>
-        <View style={{ width: '100%', maxWidth: 520 }}>
+        <View className="-mt-10 w-full items-center px-8">
+          <Text className="pb-8 text-5xl font-bold text-[#283B7D]">Login</Text>
+
           <InputField
             placeholder="Digite seu e-mail..."
             keyboardType="email-address"
@@ -98,15 +63,17 @@ export default function Login() {
             icon={<Lock color={iconColor} size={25} />}
           />
 
-          <View style={{ alignItems: 'flex-end', marginBottom: 8 }}>
+          <View className="mb-6 w-full items-end">
             <Link href="/recover-password">
-              <Text className="text-lg font-semibold underline">Esqueceu a senha?</Text>
+              <Text className="text-lg font-semibold text-[#283B7D] underline">
+                Esqueceu a senha?
+              </Text>
             </Link>
           </View>
 
           <Button
             title={isLoading ? 'Entrando...' : 'Entrar'}
-            className="mt-4 w-full"
+            className="mb-4 w-full"
             noUnderline={true}
             onPress={handleLogin}
             disabled={isLoading}
@@ -114,14 +81,14 @@ export default function Login() {
 
           <Button
             title="Cadastrar-se"
-            className="mt-4 w-full border-2 bg-[#FFFFFF]"
-            textClassName="text-[#131E46]"
+            className="w-full border-2 border-[#283B7D] bg-[#FFFFFF]"
+            textClassName="text-[#283B7D]"
             noUnderline={true}
             disabled={isLoading}
             onPress={() => router.push('/register')}
           />
         </View>
-      </View>
-    </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
