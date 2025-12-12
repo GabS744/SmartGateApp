@@ -7,6 +7,7 @@ import EventModal from "@/components/EventModal";
 import CalendarPicker from 'react-native-calendar-picker';
 import EventCreateModal, { EventFormData } from '@/components/eventCreateModal';
 import { getAllMeetings, createMeeting } from '@/services/api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type EventType = {
   id: number | string;
@@ -27,6 +28,7 @@ export default function EventsPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [eventsByDay, setEventsByDay] = useState<Record<string, EventType[]>>({});
   const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   const loadMeetings = async () => {
     try {
@@ -62,7 +64,18 @@ export default function EventsPage() {
 
   useEffect(() => {
     loadMeetings();
+    checkUserRole();
   }, []);
+
+  const checkUserRole = async () => {
+    try {
+      const role = await AsyncStorage.getItem('userRole');
+      setIsAdmin(role === 'ADMIN');
+    } catch (error) {
+      console.log('Erro ao verificar role do usuário:', error);
+      setIsAdmin(false);
+    }
+  };
 
   const dateKey = selectedDate.toISOString().split("T")[0];
   const events = eventsByDay[dateKey] || [];
@@ -151,13 +164,15 @@ export default function EventsPage() {
                 className="p-2 mr-1"
               />
 
-              <TouchableOpacity
-                onPress={() => setShowCreateModal(true)}
-                className="h-10 w-10 rounded-full bg-[#131E46] items-center justify-center"
-                activeOpacity={0.8}
-              >
-                <Plus color="#fff" size={18} />
-              </TouchableOpacity>
+              {isAdmin && (
+                <TouchableOpacity
+                  onPress={() => setShowCreateModal(true)}
+                  className="h-10 w-10 rounded-full bg-[#131E46] items-center justify-center"
+                  activeOpacity={0.8}
+                >
+                  <Plus color="#fff" size={18} />
+                </TouchableOpacity>
+              )}
             </View>
           </View>
         </View>

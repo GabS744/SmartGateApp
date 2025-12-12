@@ -13,6 +13,9 @@ api.interceptors.request.use(async (config) => {
   const token = await AsyncStorage.getItem('token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
+    console.log('Request with token:', config.url);
+  } else {
+    console.log('Request WITHOUT token:', config.url);
   }
   return config;
 });
@@ -20,8 +23,10 @@ api.interceptors.request.use(async (config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      AsyncStorage.multiRemove(['token', 'userName', 'userRole', 'userId', 'condominiumId']).catch(console.error);
+    console.log('API Error:', error.response?.status, error.response?.data);
+    if (error.response?.status === 401 || error.response?.status === 403) {
+      console.log('Authentication/Authorization error - clearing storage');
+      AsyncStorage.multiRemove(['token', 'userName', 'userRole', 'userId', 'condominiumId', 'idPerson', 'idCondominium']).catch(console.error);
     }
     return Promise.reject(error);
   }
@@ -41,6 +46,11 @@ export const login = async (email: string, password: string) => {
     if (response.data.role) await AsyncStorage.setItem('userRole', response.data.role);
     if (response.data.id) await AsyncStorage.setItem('userId', response.data.id);
     if (response.data.condominiumId) await AsyncStorage.setItem('condominiumId', response.data.condominiumId);
+
+    // TEMPORARY: Store test IDs for meeting creation until backend provides them
+    // TODO: Remove this once backend returns userId and condominiumId in login response
+    await AsyncStorage.setItem('idPerson', 'a7c4e8b9-3d2f-4a1b-8c5e-9f6d3a2b1c0e'); // Replace with actual user ID
+    await AsyncStorage.setItem('idCondominium', 'e2071683-1463-42a0-9343-41d655474305');
 
     return response.data;
   } catch (error: any) {
@@ -174,6 +184,9 @@ export const createMeeting = async (data: {
   meetingTime: string;
   location: string;
   description: string;
+  publisherId: string;
+  condominiumId: string;
+  participantIds: string[];
 }) => {
   const response = await api.post("/meetings", data);
   return response.data;

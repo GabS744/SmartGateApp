@@ -3,6 +3,7 @@ import { View, Text, Modal, TouchableOpacity, ScrollView, Alert } from 'react-na
 import { X, Check, Plus, Calendar } from 'lucide-react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import InputField from '../InputField';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export type EventFormData = {
   name: string;
@@ -10,6 +11,9 @@ export type EventFormData = {
   meetingTime: string;
   location: string;
   description: string;
+  participantIds: string[];
+  publisherId: string;
+  condominiumId: string;
 };
 
 type Props = {
@@ -23,7 +27,8 @@ export default function EventCreateModal({ visible, onClose, onSave, initialData
   const [title, setTitle] = useState('');
   const [date, setDate] = useState<Date | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [time, setTime] = useState('');
+  const [time, setTime] = useState<Date | null>(null);
+  const [showTimePicker, setShowTimePicker] = useState(false);
   const [location, setLocation] = useState('');
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [createdBy, setCreatedBy] = useState('');
@@ -37,7 +42,15 @@ export default function EventCreateModal({ visible, onClose, onSave, initialData
       setLocation(initialData.location || '');
       setCreatedBy(initialData.createdBy || '');
       setDescription(initialData.description || '');
-      setTime(initialData.time || '');
+      
+      if (initialData.time) {
+        const [hours, minutes] = initialData.time.split(':').map(Number);
+        const timeDate = new Date();
+        timeDate.setHours(hours, minutes, 0, 0);
+        setTime(timeDate);
+      } else {
+        setTime(null);
+      }
 
       if (initialData.fullDate) {
         const [year, month, day] = initialData.fullDate.split('-').map(Number);
@@ -46,7 +59,7 @@ export default function EventCreateModal({ visible, onClose, onSave, initialData
     } else {
       setTitle('');
       setDate(null);
-      setTime('');
+      setTime(null);
       setLocation('');
       setCreatedBy('');
       setDescription('');
@@ -56,17 +69,38 @@ export default function EventCreateModal({ visible, onClose, onSave, initialData
   const validate = () => {
     if (!title.trim()) return "Título é obrigatório.";
     if (!date) return "Data é obrigatória.";
-    if (!time.trim()) return "Hora é obrigatória.";
+    if (!time) return "Hora é obrigatória.";
     if (!location.trim()) return "Local é obrigatório.";
     if (!description.trim()) return "Descrição é obrigatória.";
 
     return null;
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const err = validate();
     if (err) {
       Alert.alert("Erro", err);
+      return;
+    }
+
+    let publisherId = await AsyncStorage.getItem('idPerson');
+    let condominiumId = await AsyncStorage.getItem('idCondominium');
+    const token = await AsyncStorage.getItem('token');
+
+    console.log('=== DEBUG CREATE MEETING ===');
+    console.log('publisherId:', publisherId);
+    console.log('condominiumId:', condominiumId);
+    console.log('token exists:', !!token);
+
+    // Fallback: use default condominium ID if not found
+    if (!condominiumId) {
+      condominiumId = 'e2071683-1463-42a0-9343-41d655474305';
+      console.log('Using fallback condominiumId');
+    }
+
+    // Check if publisherId exists
+    if (!publisherId) {
+      Alert.alert("Erro", "ID do usuário não encontrado. Por favor, faça login novamente.");
       return;
     }
 
@@ -74,13 +108,21 @@ export default function EventCreateModal({ visible, onClose, onSave, initialData
     const mm = String(date!.getMonth() + 1).padStart(2, "0");
     const dd = String(date!.getDate()).padStart(2, "0");
 
+    const hours = String(time!.getHours()).padStart(2, "0");
+    const minutes = String(time!.getMinutes()).padStart(2, "0");
+
     const data: EventFormData = {
+      publisherId,
+      condominiumId,
       name: title.trim(),
       meetingDate: `${yyyy}-${mm}-${dd}`,
-      meetingTime: time.trim(),
+      meetingTime: `${hours}:${minutes}`,
       location: location.trim(),
       description: description.trim(),
+      participantIds: [],
     };
+
+    console.log('Data being sent:', JSON.stringify(data, null, 2));
 
     onSave(data);
     onClose();
@@ -125,7 +167,7 @@ export default function EventCreateModal({ visible, onClose, onSave, initialData
                 className="px-3 py-3 border border-[#283B7D] rounded-lg flex-row items-center gap-2 bg-white"
               >
                 <Calendar size={16} color="#131E46" />
-                <Text>
+                <Text style={{ color: date ? '#131E46' : '#9CA3AF' }}>
                   {date ? date.toLocaleDateString("pt-BR") : "Selecionar data"}
                 </Text>
               </TouchableOpacity>
@@ -146,13 +188,30 @@ export default function EventCreateModal({ visible, onClose, onSave, initialData
             {/* Time */}
             <View className="mb-4">
               <Text className="font-bold text-[#131E46] mb-1">Hora *</Text>
-              <InputField
-                bgColor="white"
-                placeholder="__:__"
-                value={time}
-                onChangeText={setTime}
-                keyboardType="numeric"
-              />
+
+              <TouchableOpacity
+                onPress={() => setShowTimePicker(true)}
+                className="px-3 py-3 border border-[#283B7D] rounded-lg flex-row items-center gap-2 bg-white"
+              >
+                <Text style={{ color: time ? '#131E46' : '#9CA3AF' }}>
+                  {time 
+                    ? `${String(time.getHours()).padStart(2, '0')}:${String(time.getMinutes()).padStart(2, '0')}`
+                    : "__:__"}
+                </Text>
+              </TouchableOpacity>
+
+              {showTimePicker && (
+                <DateTimePicker
+                  value={time || new Date()}
+                  mode="time"
+                  is24Hour={true}
+                  display="spinner"
+                  onChange={(event, selected) => {
+                    setShowTimePicker(false);
+                    if (selected) setTime(selected);
+                  }}
+                />
+              )}
             </View>
 
             {/* Location */}
