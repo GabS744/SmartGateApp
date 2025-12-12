@@ -8,6 +8,8 @@ import org.hibernate.type.SqlTypes;
 import org.jspecify.annotations.Nullable;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import java.util.List;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -53,8 +55,9 @@ public class User implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        // Sem roles no momento → lista vazia
-        return Collections.emptyList();
+        if (this.role == null) return Collections.emptyList();
+        // Adiciona "ROLE_" antes, ficando "ROLE_ADMIN"
+        return List.of(new SimpleGrantedAuthority("ROLE_" + this.role));
     }
 
     @PrePersist
