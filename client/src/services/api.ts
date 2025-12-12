@@ -20,6 +20,7 @@ export const login = async (email: string, password: string) => {
 
   // Salva o token
   await AsyncStorage.setItem('token', response.data.token);
+  await AsyncStorage.setItem("userId", response.data.user.id)
 
   // Salva o nome e a role se existirem na resposta
   if (response.data.name) {
@@ -42,5 +43,16 @@ export const register = async (dados: any) => {
   });
   return response.data;
 };
+
+export const getUserById = async (id: string) => {
+  const response = await api.get(`/user/${id}`);
+  return response.data;
+};
+
+export const updateUser = async (id: string, data: any) => {
+  const response = await api.put(`/user/${id}`, data);
+  return response.data;
+};
+
 
 export default api;
