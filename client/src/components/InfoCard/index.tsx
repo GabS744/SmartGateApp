@@ -6,11 +6,12 @@ import { type LucideIcon, ChevronRight } from 'lucide-react-native';
 interface InfoCardProps {
   icon: LucideIcon;
   title: string;
-  route: string;
+  route?: string;
+  hasChevron?: boolean;
   children?: React.ReactNode;
 }
 
-const InfoCard = ({ icon: Icon, title, route, children }: InfoCardProps) => {
+const InfoCard = ({ icon: Icon, title, route, children, hasChevron }: InfoCardProps) => {
   const router = useRouter();
 
   return (
@@ -21,8 +22,17 @@ const InfoCard = ({ icon: Icon, title, route, children }: InfoCardProps) => {
           <Text className="text-lg font-semibold text-[#283B7D]">{title}</Text>
         </View>
 
-        <TouchableOpacity onPress={() => router.push(route as any)}>
-          <ChevronRight color="#283B7D" size={24} />
+        <TouchableOpacity
+          disabled={!route}
+          onPress={() => {
+            if (route) router.push(route as any);
+          }}
+        >
+          {hasChevron ? (
+            <ChevronRight color="#283B7D" size={24} />
+          ) : (
+            <ChevronRight color="transparent" size={0} />
+          )}
         </TouchableOpacity>
       </View>
 

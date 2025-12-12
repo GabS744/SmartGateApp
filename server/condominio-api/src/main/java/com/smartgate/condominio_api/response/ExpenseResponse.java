@@ -1,6 +1,5 @@
 package com.smartgate.condominio_api.response;
 
-import com.smartgate.condominio_api.utils.ExpenseStatus;
 import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -16,7 +15,7 @@ public class ExpenseResponse {
     private ExpenseCategoryResponse category;
     private BigDecimal amount;
     private LocalDate expenseDate;
-    private ExpenseStatus status;
+    private String status;
     private String description;
     private CommitteeMemberSummaryResponse committeeMember;
     private String condominiumId;

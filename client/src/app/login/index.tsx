@@ -1,6 +1,5 @@
 import '../../../global.css';
 import { View, Text } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import InputField from '@/components/InputField';
 import { Link, useRouter } from 'expo-router';
 import Button from '@/components/Button';
@@ -25,10 +24,16 @@ export default function Login() {
 
     try {
       await login(email, password);
+<<<<<<< HEAD
 
       router.replace('/menu');
     } catch (error: any) {
       alert(error.message || 'Erro ao fazer login.');
+=======
+      router.replace('/menu');
+    } catch {
+      alert('Erro ao fazer login. Verifique suas credenciais e tente novamente.');
+>>>>>>> fd3459fc0579aa6a32f4d08bdfacb19fc11c138b
     } finally {
       setIsLoading(false);
     }
@@ -72,15 +77,51 @@ export default function Login() {
           onPress={handleLogin}
           disabled={isLoading}></Button>
 
-        <Button
-          title="Cadastrar-se"
-          className="mt-4 w-96 border-2 bg-[#FFFFFF]"
-          textClassName="text-[#131E46]"
-          noUnderline={true}
-          disabled={isLoading}
-          onPress={() => router.push('/register')}
-        />
+      {/* alinhar conteúdo ao topo para evitar deslocamento para baixo em telas pequenas */}
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'flex-start', paddingHorizontal: 16, paddingTop: 20 }}>
+        <Text style={{ padding: 8, fontSize: 34, fontWeight: '700' }}>Login</Text>
+        <View style={{ width: '100%', maxWidth: 520 }}>
+          <InputField
+            placeholder="Digite seu e-mail..."
+            keyboardType="email-address"
+            value={email}
+            onChangeText={setEmail}
+            autoCapitalize="none"
+            icon={<Mail color={iconColor} size={25} />}
+          />
+
+          <InputField
+            placeholder="Digite sua senha..."
+            secureTextEntry={true}
+            value={password}
+            onChangeText={setPassword}
+            icon={<Lock color={iconColor} size={25} />}
+          />
+
+          <View style={{ alignItems: 'flex-end', marginBottom: 8 }}>
+            <Link href="/recover-password">
+              <Text className="text-lg font-semibold underline">Esqueceu a senha?</Text>
+            </Link>
+          </View>
+
+          <Button
+            title={isLoading ? 'Entrando...' : 'Entrar'}
+            className="mt-4 w-full"
+            noUnderline={true}
+            onPress={handleLogin}
+            disabled={isLoading}
+          />
+
+          <Button
+            title="Cadastrar-se"
+            className="mt-4 w-full border-2 bg-[#FFFFFF]"
+            textClassName="text-[#131E46]"
+            noUnderline={true}
+            disabled={isLoading}
+            onPress={() => router.push('/register')}
+          />
+        </View>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }

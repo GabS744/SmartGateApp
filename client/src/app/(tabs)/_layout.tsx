@@ -68,6 +68,7 @@ export default function TabLayout() {
       />
 
       <Tabs.Screen name="vehicle/page" options={{ href: null }} />
+      <Tabs.Screen name="eventsReunion/page" options={{ href: null }} />
       <Tabs.Screen name="veiculos" options={{ href: null }} />
       <Tabs.Screen name="index" options={{ href: null }} />
     </Tabs>
