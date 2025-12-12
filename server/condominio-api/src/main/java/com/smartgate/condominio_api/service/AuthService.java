@@ -8,6 +8,7 @@ import com.smartgate.condominio_api.repository.UserRepository;
 import com.smartgate.condominio_api.request.LoginRequest;
 import com.smartgate.condominio_api.request.RegisterRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +27,9 @@ public class AuthService {
     private final ConfirmationTokenRepository confirmationTokenRepository;
     private final EmailService emailService;
 
+    @Value("${app.base-url:http://localhost:8080}")
+    private String baseUrl;
+
     public String login(LoginRequest loginRequest) {
         User user = userRepository.findByEmail(loginRequest.getEmail())
                 .orElseThrow(InvalidCredentialsException::new);
@@ -41,7 +45,7 @@ public class AuthService {
         return jwtService.generateToken(user);
     }
 
-    @Transactional
+    @Transactional(timeout = 60)
     public void register(RegisterRequest registerRequest) {
 
         if (!registerRequest.getPassword().equals(registerRequest.getConfirmPassword())) {
@@ -51,14 +55,20 @@ public class AuthService {
         Optional<User> userOptional = userRepository.findByEmail(registerRequest.getEmail());
 
         if (userOptional.isPresent()) {
-
             User existingUser = userOptional.get();
 
             if (existingUser.isEnabled()) {
                 throw new IllegalArgumentException("Email já registrado");
             }
 
-            generateAndSendToken(existingUser, registerRequest.getFirstName());
+            try {
+                generateAndSendToken(existingUser, registerRequest.getFirstName());
+                System.out.println("✅ Token reenviado com sucesso!");
+            } catch (Exception e) {
+                System.err.println("⚠️ AVISO: Erro ao reenviar token: " + e.getMessage());
+                e.printStackTrace();
+                // Não falha o registro, mas loga o erro
+            }
             return;
         }
 
@@ -72,8 +82,17 @@ public class AuthService {
                 .build();
 
         userRepository.save(user);
+        System.out.println("✅ Usuário salvo no banco: " + user.getEmail());
 
-        generateAndSendToken(user, registerRequest.getFirstName());
+        try {
+            generateAndSendToken(user, registerRequest.getFirstName());
+            System.out.println("✅ Usuário registrado e e-mail de confirmação enviado!");
+        } catch (Exception e) {
+            System.err.println("⚠️ AVISO: Usuário criado mas erro ao enviar e-mail: " + e.getMessage());
+            e.printStackTrace();
+            // O usuário foi criado com sucesso, mas o e-mail falhou
+            // Em produção, você poderia adicionar este e-mail em uma fila de retry
+        }
     }
 
     private void generateAndSendToken(User user, String firstName) {
@@ -89,9 +108,10 @@ public class AuthService {
 
         confirmationTokenRepository.save(token);
 
-        String link = "http://localhost:8080/v1/auth/confirm?token=" + tokenUuid;
+        // Usa a URL base configurável (Railway ou localhost)
+        String link = baseUrl + "/v1/auth/confirm?token=" + tokenUuid;
 
-        System.out.println("Link de confirmação: " + link);
+        System.out.println("🔗 Link de confirmação: " + link);
 
         String emailHtml = """
             <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #ddd;">
