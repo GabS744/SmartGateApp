@@ -5,6 +5,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { ExpenseData } from '../ExpenseDetailsModal';
 import InputField from '../InputField';
 import SelectModal from '../SelectModal';
+import { getExpenseCategories } from '@/services/api';
 
 interface ExpenseFormModalProps {
   visible: boolean;
@@ -21,14 +22,29 @@ export default function ExpenseFormModal({
 }: ExpenseFormModalProps) {
   const [name, setName] = useState('');
   const [category, setCategory] = useState('');
+  const [categoryId, setCategoryId] = useState('');
   const [description, setDescription] = useState('');
   const [value, setValue] = useState('');
   const [status, setStatus] = useState('');
   const [date, setDate] = useState(new Date());
+  const [categories, setCategories] = useState<any[]>([]);
 
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showCategorySelect, setShowCategorySelect] = useState(false);
   const [showStatusSelect, setShowStatusSelect] = useState(false);
+
+  // Carregar categorias ao montar
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const cats = await getExpenseCategories();
+        setCategories(cats);
+      } catch (error) {
+        console.error('Erro ao carregar categorias:', error);
+      }
+    };
+    loadCategories();
+  }, []);
 
   useEffect(() => {
     if (visible) {
@@ -44,6 +60,7 @@ export default function ExpenseFormModal({
       } else {
         setName('');
         setCategory('');
+        setCategoryId('');
         setDescription('');
         setValue('');
         setStatus('');
@@ -61,10 +78,14 @@ export default function ExpenseFormModal({
     const [day, month, year] = date.toLocaleDateString('pt-BR').split('/');
     const dateFormatted = `${year}-${month}-${day}`;
 
+    // Encontra o categoryId baseado no nome da categoria selecionada
+    const selectedCategory = categories.find((c) => c.name === category);
+    const finalCategoryId = selectedCategory?.idCategory || categoryId || 'manutenção';
+
     const newData = {
       ...(initialData && { id: initialData.id }),
       name,
-      category,
+      categoryId: finalCategoryId,
       description,
       amount: parseFloat(value.replace(',', '.')),
       status: status === 'Pago' ? 'PAID' : status === 'Pendente' ? 'PENDING' : 'FUTURE',
@@ -83,7 +104,10 @@ export default function ExpenseFormModal({
     setShowStatusSelect(true);
   };
 
-  const categoryOptions = [
+  const categoryOptions = categories.map((cat) => ({
+    label: cat.name,
+    value: cat.name,
+  })) || [
     { label: 'Manutenção', value: 'Manutenção' },
     { label: 'Limpeza', value: 'Limpeza' },
     { label: 'Segurança', value: 'Segurança' },

@@ -15,7 +15,6 @@ import {
   HandCoins,
   UserStar,
   MessageCircleQuestionMark,
-  Star,
 } from 'lucide-react-native';
 
 import RoundIconBtn from '@/components/RoundIconBtn';
@@ -46,7 +45,6 @@ export default function Menu() {
   const router = useRouter();
 
   const [userName, setUserName] = useState('');
-  const [userRole, setUserRole] = useState('');
   const [events, setEvents] = useState<EventType[]>([]);
   const [expenses, setExpenses] = useState<ExpenseType[]>([]);
   const [loading, setLoading] = useState(true);
@@ -57,10 +55,8 @@ export default function Menu() {
     const loadUserData = async () => {
       try {
         const storedName = await AsyncStorage.getItem('userName');
-        const storedRole = await AsyncStorage.getItem('userRole');
 
         if (storedName) setUserName(storedName);
-        if (storedRole) setUserRole(storedRole);
       } catch (e) {
         console.error('Erro ao carregar dados do usuário', e);
       }
@@ -91,7 +87,7 @@ export default function Menu() {
         const today = new Date();
         const currentMonth = String(today.getMonth() + 1).padStart(2, '0');
         const currentYear = String(today.getFullYear());
-        
+
         const expensesData = await getExpenses(currentMonth, currentYear);
         const formattedExpenses: ExpenseType[] = expensesData
           .filter((expense: any) => expense.status !== 'PAID')
@@ -127,17 +123,9 @@ export default function Menu() {
                 <User color="#FFFFFF" size={24} />
               </View>
               <View className="ml-4">
-                {/* Alterado para exibir Nome e Estrela se for Admin */}
-                <View className="flex-row items-center">
-                  <Text className="text-xl font-bold text-white">
-                    Olá {userName || name || 'Usuario'}
-                  </Text>
-                  {userRole === 'ADMIN' && (
-                    <View className="ml-2">
-                      <Star color="#FFD700" fill="#FFD700" size={20} />
-                    </View>
-                  )}
-                </View>
+                <Text className="text-xl font-bold text-white">
+                  Olá {userName || name || 'Usuario'}
+                </Text>
                 <Text className="text-xs text-gray-300">Apto 102</Text>
               </View>
             </View>

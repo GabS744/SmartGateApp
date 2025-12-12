@@ -44,7 +44,7 @@ export default function TabLayout() {
         name="convidados"
         options={{
           tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon icon={Users} name="Convidados" color={color} focused={focused} />
+            <TabBarIcon icon={Users} name="Visitantes" color={color} focused={focused} />
           ),
         }}
       />
@@ -53,7 +53,7 @@ export default function TabLayout() {
         name="gastos"
         options={{
           tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon icon={HandCoins} name="Financeiro" color={color} focused={focused} />
+            <TabBarIcon icon={HandCoins} name="Gastos" color={color} focused={focused} />
           ),
         }}
       />

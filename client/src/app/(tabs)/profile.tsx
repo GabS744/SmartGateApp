@@ -45,9 +45,10 @@ export default function Profile() {
         const userId = await AsyncStorage.getItem('userId');
         const storedName = await AsyncStorage.getItem('userName');
 
-        if (userId) {
+        // Se userId for inválido ou "USER", não tenta buscar dados
+        if (userId && userId !== 'USER' && userId !== 'default-user-id') {
           const userData = await getUserById(userId);
-          
+
           // Usa o nome armazenado no AsyncStorage que já tem o nome completo
           setFormData({
             id: userData.id || '',
@@ -62,10 +63,24 @@ export default function Profile() {
             city: userData.city || '',
             apartment: userData.apartment || '',
           });
+        } else {
+          // Se não conseguir carregar do backend, usa dados do AsyncStorage
+          setFormData((prev) => ({
+            ...prev,
+            id: userId || '',
+            name: storedName || 'Usuário',
+          }));
         }
       } catch (error) {
         console.error('Erro ao carregar dados do usuário:', error);
-        Alert.alert('Erro', 'Não foi possível carregar os dados do perfil.');
+        // Não mostra erro se o usuário não existir no backend, apenas usa dados do storage
+        const storedName = await AsyncStorage.getItem('userName');
+        const userId = await AsyncStorage.getItem('userId');
+        setFormData((prev) => ({
+          ...prev,
+          id: userId || '',
+          name: storedName || 'Usuário',
+        }));
       } finally {
         setIsLoading(false);
       }
@@ -163,11 +178,7 @@ export default function Profile() {
                 <ActivityIndicator color="#FFF" size="small" />
               ) : (
                 <>
-                  {isEditing ? (
-                    <Check size={16} color="#FFF" />
-                  ) : (
-                    <Edit2 size={16} color="#FFF" />
-                  )}
+                  {isEditing ? <Check size={16} color="#FFF" /> : <Edit2 size={16} color="#FFF" />}
                   <Text className="ml-2 font-bold text-white">
                     {isEditing ? 'Salvar' : 'Editar'}
                   </Text>
@@ -202,99 +213,99 @@ export default function Profile() {
             </Text>
           </View>
 
-        {/* Seções de Informação */}
-        <View className="w-full px-6">
-          <ProfileSection title="Informações Básicas">
-            <InfoField
-              label="Nome Completo"
-              value={formData.name}
-              isEditing={isEditing}
-              onChangeText={(t) => setFormData((prev) => ({ ...prev, name: t }))}
-            />
-            <View className="flex-row gap-4">
-              <View className="flex-1">
-                <InfoField
-                  label="CPF"
-                  value={formData.cpf}
-                  isEditing={isEditing}
-                  onChangeText={(t) => setFormData((prev) => ({ ...prev, cpf: t }))}
-                />
+          {/* Seções de Informação */}
+          <View className="w-full px-6">
+            <ProfileSection title="Informações Básicas">
+              <InfoField
+                label="Nome Completo"
+                value={formData.name}
+                isEditing={isEditing}
+                onChangeText={(t) => setFormData((prev) => ({ ...prev, name: t }))}
+              />
+              <View className="flex-row gap-4">
+                <View className="flex-1">
+                  <InfoField
+                    label="CPF"
+                    value={formData.cpf}
+                    isEditing={isEditing}
+                    onChangeText={(t) => setFormData((prev) => ({ ...prev, cpf: t }))}
+                  />
+                </View>
+                <View className="flex-1">
+                  <InfoField
+                    label="RG"
+                    value={formData.rg}
+                    isEditing={isEditing}
+                    onChangeText={(t) => setFormData((prev) => ({ ...prev, rg: t }))}
+                  />
+                </View>
               </View>
-              <View className="flex-1">
-                <InfoField
-                  label="RG"
-                  value={formData.rg}
-                  isEditing={isEditing}
-                  onChangeText={(t) => setFormData((prev) => ({ ...prev, rg: t }))}
-                />
+              <View className="flex-row gap-4">
+                <View className="flex-1">
+                  <InfoField
+                    label="Nascimento"
+                    value={formData.dateOfBirth}
+                    isEditing={isEditing}
+                    onChangeText={(t) => setFormData((prev) => ({ ...prev, dateOfBirth: t }))}
+                  />
+                </View>
+                <View className="flex-1">
+                  <InfoField
+                    label="Sexo"
+                    value={formData.gender}
+                    isEditing={isEditing}
+                    onChangeText={(t) => setFormData((prev) => ({ ...prev, gender: t }))}
+                  />
+                </View>
               </View>
-            </View>
-            <View className="flex-row gap-4">
-              <View className="flex-1">
-                <InfoField
-                  label="Nascimento"
-                  value={formData.dateOfBirth}
-                  isEditing={isEditing}
-                  onChangeText={(t) => setFormData((prev) => ({ ...prev, dateOfBirth: t }))}
-                />
-              </View>
-              <View className="flex-1">
-                <InfoField
-                  label="Sexo"
-                  value={formData.gender}
-                  isEditing={isEditing}
-                  onChangeText={(t) => setFormData((prev) => ({ ...prev, gender: t }))}
-                />
-              </View>
-            </View>
-          </ProfileSection>
+            </ProfileSection>
 
-          <ProfileSection title="Contato">
-            <InfoField
-              label="E-mail"
-              value={formData.email}
-              isEditing={isEditing}
-              onChangeText={(t) => setFormData((prev) => ({ ...prev, email: t }))}
-              keyboardType="email-address"
-            />
-            <InfoField
-              label="Telefone"
-              value={formData.phone}
-              isEditing={isEditing}
-              onChangeText={(t) => setFormData((prev) => ({ ...prev, phone: t }))}
-              keyboardType="numeric"
-            />
-          </ProfileSection>
+            <ProfileSection title="Contato">
+              <InfoField
+                label="E-mail"
+                value={formData.email}
+                isEditing={isEditing}
+                onChangeText={(t) => setFormData((prev) => ({ ...prev, email: t }))}
+                keyboardType="email-address"
+              />
+              <InfoField
+                label="Telefone"
+                value={formData.phone}
+                isEditing={isEditing}
+                onChangeText={(t) => setFormData((prev) => ({ ...prev, phone: t }))}
+                keyboardType="numeric"
+              />
+            </ProfileSection>
 
-          <ProfileSection title="Endereço">
-            <InfoField
-              label="Logradouro"
-              value={formData.address}
-              isEditing={isEditing}
-              onChangeText={(t) => setFormData((prev) => ({ ...prev, address: t }))}
-            />
-            <InfoField
-              label="Cidade/UF"
-              value={formData.city}
-              isEditing={isEditing}
-              onChangeText={(t) => setFormData((prev) => ({ ...prev, city: t }))}
-            />
-            <InfoField
-              label="Apartamento"
-              value={formData.apartment}
-              isEditing={isEditing}
-              onChangeText={(t) => setFormData((prev) => ({ ...prev, apartment: t }))}
-            />
-          </ProfileSection>
+            <ProfileSection title="Endereço">
+              <InfoField
+                label="Logradouro"
+                value={formData.address}
+                isEditing={isEditing}
+                onChangeText={(t) => setFormData((prev) => ({ ...prev, address: t }))}
+              />
+              <InfoField
+                label="Cidade/UF"
+                value={formData.city}
+                isEditing={isEditing}
+                onChangeText={(t) => setFormData((prev) => ({ ...prev, city: t }))}
+              />
+              <InfoField
+                label="Apartamento"
+                value={formData.apartment}
+                isEditing={isEditing}
+                onChangeText={(t) => setFormData((prev) => ({ ...prev, apartment: t }))}
+              />
+            </ProfileSection>
 
-          <TouchableOpacity
-            onPress={handleLogout}
-            className="mb-6 mt-8 flex-row items-center justify-center rounded-xl border border-red-200 bg-red-100 p-4">
-            <LogOut size={20} color="#DC2626" />
-            <Text className="ml-2 text-base font-bold text-red-600">Sair da Conta</Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
+            <TouchableOpacity
+              onPress={handleLogout}
+              className="mb-6 mt-8 flex-row items-center justify-center rounded-xl border border-red-200 bg-red-100 p-4">
+              <LogOut size={20} color="#DC2626" />
+              <Text className="ml-2 text-base font-bold text-red-600">Sair da Conta</Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
       )}
     </SafeAreaView>
   );
