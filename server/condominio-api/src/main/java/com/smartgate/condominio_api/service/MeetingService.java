@@ -1,4 +1,3 @@
-/*
 package com.smartgate.condominio_api.service;
 
 import com.smartgate.condominio_api.request.MeetingRequest;
@@ -7,6 +6,7 @@ import com.smartgate.condominio_api.response.MeetingResponse;
 import com.smartgate.condominio_api.mapper.MeetingMapper;
 import com.smartgate.condominio_api.domain.*;
 import com.smartgate.condominio_api.repository.*;
+import com.smartgate.condominio_api.utils.InvitationStatus;
 import com.smartgate.condominio_api.utils.MeetingStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -213,4 +213,4 @@ public class MeetingService {
 
         return response;
     }
-}*/
+}
