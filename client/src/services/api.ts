@@ -61,7 +61,13 @@ export const login = async (email: string, password: string) => {
     const response = await api.post('/auth/login', { email, password });
     console.log('Login response:', response.data);
 
+<<<<<<< HEAD
     await AsyncStorage.setItem('token', response.data.token);
+=======
+  // Salva o token
+  await AsyncStorage.setItem('token', response.data.token);
+  await AsyncStorage.setItem("userId", response.data.user.id)
+>>>>>>> 76a25028af46a31775081ca62569a64b1b83deff
 
     // O backend retorna o userId real na resposta
     if (response.data.id) {
@@ -105,6 +111,7 @@ export const register = async (dados: any) => {
   return response.data;
 };
 
+<<<<<<< HEAD
 // --- FUNÇÃO DE LOGOUT ---
 export const logout = async () => {
   try {
@@ -346,4 +353,17 @@ export const updateUser = async (id: string, data: any) => {
   }
 };
 
+=======
+export const getUserById = async (id: string) => {
+  const response = await api.get(`/user/${id}`);
+  return response.data;
+};
+
+export const updateUser = async (id: string, data: any) => {
+  const response = await api.put(`/user/${id}`, data);
+  return response.data;
+};
+
+
+>>>>>>> 76a25028af46a31775081ca62569a64b1b83deff
 export default api;

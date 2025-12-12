@@ -103,6 +103,7 @@ export default function Profile() {
     return `${year}-${month}-${day}`;
   };
 
+  // 🔵 Atualiza usuário real
   const handleSave = async () => {
     if (!formData.id) {
       Alert.alert('Erro', 'ID do usuário não encontrado.');
@@ -260,6 +261,7 @@ export default function Profile() {
               </View>
             </ProfileSection>
 
+<<<<<<< HEAD
             <ProfileSection title="Contato">
               <InfoField
                 label="E-mail"
@@ -307,6 +309,81 @@ export default function Profile() {
           </View>
         </ScrollView>
       )}
+=======
+        <View className="w-full px-6">
+          {/* SEÇÃO: INFOS BÁSICAS */}
+          <ProfileSection title="Informações Básicas">
+            <InfoField
+              label="Nome Completo"
+              value={formData.fullName}
+              isEditing={isEditing}
+              onChangeText={(t) => handleChange('fullName', t)}
+            />
+
+            <View className="flex-row gap-4">
+              <View className="flex-1">
+                <InfoField label="CPF" value={formData.cpf} />
+              </View>
+
+              <View className="flex-1">
+                <InfoField label="RG" value={formData.rg} />
+              </View>
+            </View>
+
+            <View className="flex-row gap-4">
+              <View className="flex-1">
+                <InfoField
+                  label="Nascimento"
+                  value={formData.birthDate}
+                  isEditing={isEditing}
+                  onChangeText={(t) => handleChange('birthDate', t)}
+                />
+              </View>
+
+              <View className="flex-1">
+                <InfoField label="Sexo" value={formData.gender} />
+              </View>
+            </View>
+          </ProfileSection>
+
+          {/* SEÇÃO: CONTATO */}
+          <ProfileSection title="Contato">
+            <InfoField
+              label="E-mail"
+              value={formData.email}
+              isEditing={isEditing}
+              onChangeText={(t) => handleChange('email', t)}
+              keyboardType="email-address"
+            />
+
+            <InfoField
+              label="Telefone"
+              value={formData.phone}
+              isEditing={isEditing}
+              onChangeText={(t) => handleChange('phone', t)}
+              keyboardType="numeric"
+            />
+          </ProfileSection>
+
+          {/* SEÇÃO: ENDEREÇO */}
+          <ProfileSection title="Endereço">
+            <InfoField
+              label="Logradouro"
+              value={formData.address}
+              isEditing={isEditing}
+              onChangeText={(t) => handleChange('address', t)}
+            />
+
+            <InfoField
+              label="Cidade/UF"
+              value={formData.city}
+              isEditing={isEditing}
+              onChangeText={(t) => handleChange('city', t)}
+            />
+          </ProfileSection>
+        </View>
+      </ScrollView>
+>>>>>>> 76a25028af46a31775081ca62569a64b1b83deff
     </SafeAreaView>
   );
 }

@@ -47,7 +47,7 @@ public class AuthService {
         String token = jwtService.generateToken(user);
         
         // Retorna o token junto com o nome e a role
-        return new LoginResponse(token, user.getFullName(), user.getRole());
+        return new LoginResponse(token, user.getFullName(), user.getRole(), user.getId());
     }
 
     @Transactional(timeout = 60)
