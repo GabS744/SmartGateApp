@@ -172,7 +172,10 @@ export default function Menu() {
               label="Eventos"
               onPress={() => router.push('/eventsReunion/page')}
             />
-            <RoundIconBtn icon={MessageCircleQuestionMark} label="Suporte" />
+            <RoundIconBtn
+              icon={MessageCircleQuestionMark} 
+              label="Suporte" 
+              onPress={() => router.push('/faq/page')}/>
           </ScrollView>
         </View>
 
