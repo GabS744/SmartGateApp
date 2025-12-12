@@ -164,33 +164,18 @@ export const getUpcomingMeetings = async () => {
 };
 
 export const getAllMeetings = async () => {
-  let condoId = await AsyncStorage.getItem('condominiumId');
-  if (!condoId) {
-    condoId = 'e2071683-1463-42a0-9343-41d655474305';
-  }
-
-  const response = await api.get(`/meetings/condominium/${condoId}`);
+  const response = await api.get("/meetings");
   return response.data;
 };
 
-export const createMeeting = async (data: any) => {
-  let condoId = await AsyncStorage.getItem('condominiumId');
-  if (!condoId) {
-    condoId = 'e2071683-1463-42a0-9343-41d655474305';
-  }
-
-  let userId = await AsyncStorage.getItem('userId');
-  if (!userId) {
-    userId = 'default-user-id';
-  }
-
-  const meetingData = {
-    ...data,
-    condominiumId: condoId,
-    createdBy: userId,
-  };
-
-  const response = await api.post('/meetings', meetingData);
+export const createMeeting = async (data: {
+  name: string;
+  meetingDate: string;
+  meetingTime: string;
+  location: string;
+  description: string;
+}) => {
+  const response = await api.post("/meetings", data);
   return response.data;
 };
 

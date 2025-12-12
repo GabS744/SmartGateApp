@@ -20,6 +20,7 @@ export default function EventModal({ visible, onClose, event }: { visible: boole
         <View className="bg-white w-full rounded-xl p-5">
           <View className="flex-row justify-between items-center mb-3">
             <Text className="text-lg font-bold">{event.title}</Text>
+
             <TouchableOpacity onPress={onClose}>
               <Text className="text-gray-500 text-xl">×</Text>
             </TouchableOpacity>
@@ -27,7 +28,11 @@ export default function EventModal({ visible, onClose, event }: { visible: boole
 
           <View className="flex-row items-center gap-2 mb-2">
             <Calendar size={18} color="#131E46" />
-            <Text className="text-gray-700">{event.fullDate}</Text>
+            <Text className="text-gray-700">
+              {event.fullDate
+                ? event.fullDate.split("-").reverse().join("/")
+                : ""}
+            </Text>
           </View>
 
           <View className="flex-row items-center gap-2 mb-2">
