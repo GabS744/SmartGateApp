@@ -164,7 +164,7 @@ export default function EventsPage() {
                 className="p-2 mr-1"
               />
 
-              {isAdmin && (
+              
                 <TouchableOpacity
                   onPress={() => setShowCreateModal(true)}
                   className="h-10 w-10 rounded-full bg-[#131E46] items-center justify-center"
@@ -172,7 +172,7 @@ export default function EventsPage() {
                 >
                   <Plus color="#fff" size={18} />
                 </TouchableOpacity>
-              )}
+              
             </View>
           </View>
         </View>
