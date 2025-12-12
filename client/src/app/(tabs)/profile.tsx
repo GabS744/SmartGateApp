@@ -1,5 +1,5 @@
 import '../../../global.css';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -13,63 +13,137 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { User, Edit2, Check } from 'lucide-react-native';
 import ProfileSection from '@/components/ProfileSection';
 import InfoField from '@/components/InfoField';
-import { updateUser } from '@/services/api';
+import { getUserById, updateUser } from '@/services/api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function Profile() {
   const [isEditing, setIsEditing] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
   const [formData, setFormData] = useState({
-    id: 1,
-    fullName: 'Jefferson Gomes da Silva Filho',
-    cpf: 'XXX.XXX.XXX-XX',
-    rg: 'XXX.XXX.XXX-X',
-    birthDate: '01/01/1990',
-    gender: 'MASCULINO',
-    email: 'jefferson@email.com.br',
-    phone: '(11) 99999-9999',
-    address: 'Rua Exemplo, 123',
-    city: 'São Paulo - SP',
+    id: '',
+    fullName: '',
+    cpf: '',
+    rg: '',
+    birthDate: '',
+    gender: '',
+    email: '',
+    phone: '',
+    address: '',
+    city: '',
   });
+
+  // 🔵 Busca dados REAIS do usuário
+  useEffect(() => {
+    (async () => {
+      try {
+        const userId = await AsyncStorage.getItem('userId');
+        if (!userId) {
+          Alert.alert('Erro', 'Não foi possível identificar o usuário.');
+          return;
+        }
+
+        const user = await getUserById(userId);
+
+        // Converte a data vinda do backend (YYYY-MM-DD)
+        const formattedBirth =
+          user.dateOfBirth
+            ? new Date(user.dateOfBirth).toLocaleDateString('pt-BR')
+            : '';
+
+        // Aqui você decide como tratar CPF, RG, endereço etc
+        // (o backend não retorna isso, então fica opcional ou mantemos vazio)
+        setFormData({
+          id: user.id,
+          fullName: user.fullName,
+          email: user.email,
+          birthDate: formattedBirth,
+          cpf: '',
+          rg: '',
+          gender: '',
+          phone: '',
+          address: '',
+          city: '',
+        });
+
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      } catch (err) {
+        Alert.alert('Erro', 'Não foi possível carregar seus dados.');
+      } finally {
+        setIsLoading(false);
+      }
+    })();
+  }, []);
 
   const handleChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
+  // 🔵 Atualiza usuário real
   const handleSave = async () => {
-    setIsLoading(true);
+    setSaving(true);
     try {
-      await updateUser(formData.id, formData);
+      // Converte dd/mm/yyyy → yyyy-mm-dd
+      const [day, month, year] = formData.birthDate.split('/');
+      const apiDate = `${year}-${month}-${day}`;
+
+      const payload = {
+        fullName: formData.fullName,
+        email: formData.email,
+        password: '12345678', // caso o backend EXIJA senha
+        dateOfBirth: apiDate,
+      };
+
+      await updateUser(formData.id, payload);
+
       setIsEditing(false);
       Alert.alert('Sucesso', 'Perfil atualizado com sucesso!');
     } catch (error) {
+      console.log(error);
       Alert.alert('Erro', 'Não foi possível atualizar.');
     } finally {
-      setIsLoading(false);
+      setSaving(false);
     }
   };
+
+  if (isLoading) {
+    return (
+      <SafeAreaView className="flex-1 items-center justify-center">
+        <ActivityIndicator size="large" color="#131E46" />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView className="flex-1 bg-[#F2F3FB]">
       <ScrollView
         contentContainerStyle={{ alignItems: 'center', paddingBottom: 40 }}
         showsVerticalScrollIndicator={false}>
+
+        {/* BOTÃO DE EDITAR / SALVAR */}
         <View className="mt-4 w-full flex-row justify-end px-6">
           <TouchableOpacity
             onPress={() => (isEditing ? handleSave() : setIsEditing(true))}
-            className={`flex-row items-center rounded-full px-4 py-2 ${isEditing ? 'bg-green-600' : 'bg-[#131E46]'}`}
-            disabled={isLoading}>
-            {isLoading ? (
+            className={`flex-row items-center rounded-full px-4 py-2 ${
+              isEditing ? 'bg-green-600' : 'bg-[#131E46]'
+            }`}
+            disabled={saving}>
+
+            {saving ? (
               <ActivityIndicator color="#FFF" size="small" />
             ) : (
               <>
                 {isEditing ? <Check size={16} color="#FFF" /> : <Edit2 size={16} color="#FFF" />}
-                <Text className="ml-2 font-bold text-white">{isEditing ? 'Salvar' : 'Editar'}</Text>
+                <Text className="ml-2 font-bold text-white">
+                  {isEditing ? 'Salvar' : 'Editar'}
+                </Text>
               </>
             )}
           </TouchableOpacity>
         </View>
 
+        {/* FOTO + NOME */}
         <View className="mb-8 mt-4 w-full items-center">
           <View className="h-36 w-36 items-center justify-center rounded-[72px] bg-white shadow-sm">
             <View className="h-32 w-32 items-center justify-center rounded-[64px] bg-[#131E46]">
@@ -94,6 +168,7 @@ export default function Profile() {
         </View>
 
         <View className="w-full px-6">
+          {/* SEÇÃO: INFOS BÁSICAS */}
           <ProfileSection title="Informações Básicas">
             <InfoField
               label="Nome Completo"
@@ -101,14 +176,17 @@ export default function Profile() {
               isEditing={isEditing}
               onChangeText={(t) => handleChange('fullName', t)}
             />
+
             <View className="flex-row gap-4">
               <View className="flex-1">
                 <InfoField label="CPF" value={formData.cpf} />
               </View>
+
               <View className="flex-1">
                 <InfoField label="RG" value={formData.rg} />
               </View>
             </View>
+
             <View className="flex-row gap-4">
               <View className="flex-1">
                 <InfoField
@@ -118,12 +196,14 @@ export default function Profile() {
                   onChangeText={(t) => handleChange('birthDate', t)}
                 />
               </View>
+
               <View className="flex-1">
                 <InfoField label="Sexo" value={formData.gender} />
               </View>
             </View>
           </ProfileSection>
 
+          {/* SEÇÃO: CONTATO */}
           <ProfileSection title="Contato">
             <InfoField
               label="E-mail"
@@ -132,6 +212,7 @@ export default function Profile() {
               onChangeText={(t) => handleChange('email', t)}
               keyboardType="email-address"
             />
+
             <InfoField
               label="Telefone"
               value={formData.phone}
@@ -141,6 +222,7 @@ export default function Profile() {
             />
           </ProfileSection>
 
+          {/* SEÇÃO: ENDEREÇO */}
           <ProfileSection title="Endereço">
             <InfoField
               label="Logradouro"
@@ -148,6 +230,7 @@ export default function Profile() {
               isEditing={isEditing}
               onChangeText={(t) => handleChange('address', t)}
             />
+
             <InfoField
               label="Cidade/UF"
               value={formData.city}

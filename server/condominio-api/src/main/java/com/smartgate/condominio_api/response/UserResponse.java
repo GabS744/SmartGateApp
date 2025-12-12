@@ -16,4 +16,6 @@ public class UserResponse {
     private String role;
     private Boolean enabled;
     private String createdAt;
+    private String dateOfBirth;
+
 }
