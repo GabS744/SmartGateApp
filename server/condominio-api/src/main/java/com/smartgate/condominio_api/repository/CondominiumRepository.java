@@ -6,6 +6,4 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface CondominiumRepository extends JpaRepository<Condominium, String> {
-
-}
 }
