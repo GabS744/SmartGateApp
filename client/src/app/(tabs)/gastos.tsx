@@ -1,41 +1,92 @@
-import React, { useState, useMemo } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Modal, FlatList, Alert } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  Modal,
+  FlatList,
+  Alert,
+  ActivityIndicator,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ChevronDown, TrendingUp, TrendingDown, Wallet, X, Plus } from 'lucide-react-native';
+import { ChevronDown, X, Plus } from 'lucide-react-native';
 
 import ExpenseCard from '@/components/ExpenseCard';
 import ExpenseDetailsModal, { ExpenseData } from '@/components/ExpenseDetailsModal';
 import ExpenseFormModal from '@/components/ExpenseFormModal';
+import {
+  getExpenses,
+  deleteExpense,
+  createExpense,
+  updateExpense,
+  payExpense,
+} from '@/services/api';
+
+const formatCurrency = (value: number) => {
+  return value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+};
+
+const formatDate = (dateString: string) => {
+  if (!dateString) return '';
+  const [year, month, day] = dateString.split('-');
+  return `${day}/${month}/${year}`;
+};
+
+const mapStatus = (status: string) => {
+  const s = status ? status.toUpperCase() : 'PENDING';
+  if (s === 'PAID') return 'Pago';
+  if (s === 'PENDING') return 'Pendente';
+  if (s === 'FUTURE') return 'Futuro';
+  return status;
+};
 
 export default function GastosScreen() {
-  const [expensesList, setExpensesList] = useState<ExpenseData[]>([
-    {
-      id: '1',
-      category: 'Limpeza',
-      status: 'Pago',
-      title: 'Serviço de limpeza mensal',
-      value: '1000,00',
-      date: '01/01/2026',
-      description: 'Limpeza geral das áreas comuns.',
-    },
-    {
-      id: '2',
-      category: 'Manutenção',
-      status: 'Pendente',
-      title: 'Reparo poste de luz',
-      value: '1000,00',
-      date: '15/02/2026',
-      description: 'Orçamento aprovado para troca de fiação.',
-    },
-  ]);
+  const [expensesList, setExpensesList] = useState<ExpenseData[]>([]);
+  const [loading, setLoading] = useState(false);
 
   const [viewModalData, setViewModalData] = useState<ExpenseData | null>(null);
   const [formModalVisible, setFormModalVisible] = useState(false);
   const [editingExpense, setEditingExpense] = useState<ExpenseData | null>(null);
 
-  const [selectedMonth, setSelectedMonth] = useState<string>('');
-  const [selectedYear, setSelectedYear] = useState<string>('2026');
+  const today = new Date();
+  const currentMonthStr = String(today.getMonth() + 1).padStart(2, '0');
+  const currentYearStr = String(today.getFullYear());
+
+  const [selectedMonth, setSelectedMonth] = useState<string>(currentMonthStr);
+  const [selectedYear, setSelectedYear] = useState<string>(currentYearStr);
   const [filterModalVisible, setFilterModalVisible] = useState<'month' | 'year' | null>(null);
+
+  const fetchData = useCallback(async () => {
+    if (!selectedMonth || !selectedYear) return;
+
+    setLoading(true);
+    try {
+      // Busca apenas a lista de despesas
+      const expensesData = await getExpenses(selectedMonth, selectedYear);
+
+      const formattedList: ExpenseData[] = expensesData.map((item: any) => ({
+        id: item.idExpense,
+        category: item.category ? item.category.name : 'Outros',
+        status: mapStatus(item.status),
+        title: item.name,
+        value: formatCurrency(item.amount),
+        date: formatDate(item.expenseDate),
+        description: item.description,
+        rawValue: item.amount,
+        rawDate: item.expenseDate,
+      }));
+      setExpensesList(formattedList);
+    } catch (_error: any) {
+      console.error('Erro ao buscar gastos:', _error);
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedMonth, selectedYear]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const openAddModal = () => {
     setEditingExpense(null);
@@ -48,13 +99,20 @@ export default function GastosScreen() {
     setFormModalVisible(true);
   };
 
-  const handleSaveExpense = (data: any) => {
-    if (editingExpense) {
-      setExpensesList((prev) => prev.map((item) => (item.id === data.id ? data : item)));
-      Alert.alert('Sucesso', 'Gasto atualizado!');
-    } else {
-      setExpensesList((prev) => [data, ...prev]);
-      Alert.alert('Sucesso', 'Gasto criado!');
+  const handleSaveExpense = async (data: any) => {
+    try {
+      if (editingExpense) {
+        await updateExpense(data.id, data);
+        Alert.alert('Sucesso', 'Gasto atualizado!');
+      } else {
+        await createExpense(data);
+        Alert.alert('Sucesso', 'Gasto criado!');
+      }
+      setFormModalVisible(false);
+      fetchData();
+    } catch (error: any) {
+      const errorMsg = error.response?.data?.error || error.message || 'Não foi possível salvar.';
+      Alert.alert('Erro', errorMsg);
     }
   };
 
@@ -65,15 +123,29 @@ export default function GastosScreen() {
       {
         text: 'Excluir',
         style: 'destructive',
-        onPress: () => {
-          setExpensesList((prev) => prev.filter((item) => item.id !== id));
+        onPress: async () => {
+          try {
+            await deleteExpense(id);
+            fetchData();
+          } catch {
+            Alert.alert('Erro', 'Não foi possível excluir.');
+          }
         },
       },
     ]);
   };
 
+  const handleMarkAsPaid = async (id: string) => {
+    try {
+      await payExpense(id);
+      Alert.alert('Sucesso', 'Gasto marcado como pago!');
+      fetchData();
+    } catch {
+      Alert.alert('Erro', 'Não foi possível marcar como pago.');
+    }
+  };
+
   const months = [
-    { label: 'Todos os meses', value: '' },
     { label: 'Janeiro', value: '01' },
     { label: 'Fevereiro', value: '02' },
     { label: 'Março', value: '03' },
@@ -88,27 +160,7 @@ export default function GastosScreen() {
     { label: 'Dezembro', value: '12' },
   ];
   const years = ['2024', '2025', '2026'];
-
-  const filteredExpenses = useMemo(() => {
-    return expensesList.filter((item) => {
-      const [day, month, year] = item.date.split('/');
-      const monthMatch = selectedMonth === '' || month === selectedMonth;
-      const yearMatch = year === selectedYear;
-      return monthMatch && yearMatch;
-    });
-  }, [selectedMonth, selectedYear, expensesList]);
-
-  const currentMonthLabel = months.find((m) => m.value === selectedMonth)?.label || 'Filtrar (mês)';
-
-  const calculateTotal = (type: 'receita' | 'despesa' | 'saldo') => {
-    if (type === 'receita') return '0,00';
-    if (type === 'saldo') return '0,00';
-    const total = filteredExpenses.reduce(
-      (acc, item) => acc + parseFloat(item.value.replace(',', '.')),
-      0
-    );
-    return total.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
-  };
+  const currentMonthLabel = months.find((m) => m.value === selectedMonth)?.label || 'Selecione';
 
   return (
     <SafeAreaView className="flex-1 bg-[#F2F3FB]">
@@ -117,10 +169,11 @@ export default function GastosScreen() {
         showsVerticalScrollIndicator={false}>
         <Text className="mb-6 text-3xl font-bold text-[#283B7D]">Gastos do Condomínio</Text>
 
+        {/* Filtros de Data */}
         <View className="mb-6 flex-row gap-4">
           <TouchableOpacity
             onPress={() => setFilterModalVisible('month')}
-            className="flex-1 flex-row items-center justify-between rounded-lg bg-white px-4 py-3 shadow-sm">
+            className="flex-1 flex-row items-center justify-between rounded-lg border border-[#283B7D] bg-white px-4 py-3 shadow-sm">
             <Text className="font-bold text-[#131E46]" numberOfLines={1}>
               {currentMonthLabel}
             </Text>
@@ -128,41 +181,18 @@ export default function GastosScreen() {
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => setFilterModalVisible('year')}
-            className="w-28 flex-row items-center justify-between rounded-lg bg-white px-4 py-3 shadow-sm">
-            <Text className="font-bold text-blue-600">{selectedYear}</Text>
+            className="w-28 flex-row items-center justify-between rounded-lg border border-[#283B7D] bg-white px-4 py-3 shadow-sm">
+            <Text className="font-bold text-[#131E46]">{selectedYear}</Text>
             <ChevronDown size={20} color="#131E46" />
           </TouchableOpacity>
         </View>
 
-        <View className="mb-6 flex-row justify-between">
-          <View className="h-20 w-[30%] justify-center rounded-lg border border-blue-200 bg-white p-2">
-            <View className="mb-1 flex-row items-center">
-              <TrendingUp size={14} color="#22C55E" />
-              <Text className="ml-1 text-[10px] font-bold text-blue-400">Receitas</Text>
-            </View>
-            <Text className="text-lg font-bold text-[#131E46]">R$ 0,00</Text>
-          </View>
-          <View className="h-20 w-[30%] justify-center rounded-lg border border-blue-200 bg-white p-2">
-            <View className="mb-1 flex-row items-center">
-              <TrendingDown size={14} color="#EF4444" />
-              <Text className="ml-1 text-[10px] font-bold text-blue-400">Despesas</Text>
-            </View>
-            <Text className="text-lg font-bold text-[#131E46]">R$ {calculateTotal('despesa')}</Text>
-          </View>
-          <View className="h-20 w-[30%] justify-center rounded-lg border border-blue-200 bg-white p-2">
-            <View className="mb-1 flex-row items-center">
-              <Wallet size={14} color="#3B82F6" />
-              <Text className="ml-1 text-[10px] font-bold text-blue-400">Saldo</Text>
-            </View>
-            <Text className="text-lg font-bold text-[#131E46]">R$ 0,00</Text>
-          </View>
-        </View>
-
-        <View className="mb-6 h-[2px] w-full bg-blue-200/50" />
-
+        {/* Lista de Gastos */}
         <View>
-          {filteredExpenses.length > 0 ? (
-            filteredExpenses.map((item) => (
+          {loading ? (
+            <ActivityIndicator size="large" color="#131E46" />
+          ) : expensesList.length > 0 ? (
+            expensesList.map((item) => (
               <ExpenseCard key={item.id} {...item} onPressDetails={() => setViewModalData(item)} />
             ))
           ) : (
@@ -178,12 +208,14 @@ export default function GastosScreen() {
         </TouchableOpacity>
       </ScrollView>
 
+      {/* Modais */}
       <ExpenseDetailsModal
         visible={viewModalData !== null}
         data={viewModalData}
         onClose={() => setViewModalData(null)}
         onEdit={openEditModal}
         onDelete={handleDelete}
+        onMarkAsPaid={handleMarkAsPaid}
       />
 
       <ExpenseFormModal
@@ -213,9 +245,9 @@ export default function GastosScreen() {
             </View>
             <FlatList
               data={filterModalVisible === 'month' ? months : years}
-              keyExtractor={(item) => (typeof item === 'string' ? item : item.value)}
+              keyExtractor={(item: any) => (typeof item === 'string' ? item : item.value)}
               showsVerticalScrollIndicator={false}
-              renderItem={({ item }) => {
+              renderItem={({ item }: { item: any }) => {
                 const label = typeof item === 'string' ? item : item.label;
                 const value = typeof item === 'string' ? item : item.value;
                 const isSelected =

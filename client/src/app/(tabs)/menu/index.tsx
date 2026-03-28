@@ -2,9 +2,10 @@ import '../../../../global.css';
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useState, useEffect } from 'react'; // Adicionado useEffect
-import AsyncStorage from '@react-native-async-storage/async-storage'; // Adicionado import
+import { useState, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import EventModal from '@/components/EventModal';
+import { getUpcomingMeetings, getExpenses } from '@/services/api';
 import {
   User,
   Bell,
@@ -14,7 +15,6 @@ import {
   HandCoins,
   UserStar,
   MessageCircleQuestionMark,
-  Star, // Adicionado ícone Star
 } from 'lucide-react-native';
 
 import RoundIconBtn from '@/components/RoundIconBtn';
@@ -32,23 +32,31 @@ type EventType = {
   fullDate?: string;
 };
 
+type ExpenseType = {
+  id: string;
+  name: string;
+  amount: number;
+  status: string;
+  dueDate: string;
+};
+
 export default function Menu() {
   const { name } = useLocalSearchParams();
   const router = useRouter();
 
-  // Estados para armazenar dados do usuário
   const [userName, setUserName] = useState('');
-  const [userRole, setUserRole] = useState('');
+  const [events, setEvents] = useState<EventType[]>([]);
+  const [expenses, setExpenses] = useState<ExpenseType[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedEvent, setSelectedEvent] = useState<EventType | null>(null);
+  const [openModal, setOpenModal] = useState(false);
 
-  // Carregar dados do usuário ao iniciar
   useEffect(() => {
     const loadUserData = async () => {
       try {
         const storedName = await AsyncStorage.getItem('userName');
-        const storedRole = await AsyncStorage.getItem('userRole');
 
         if (storedName) setUserName(storedName);
-        if (storedRole) setUserRole(storedRole);
       } catch (e) {
         console.error('Erro ao carregar dados do usuário', e);
       }
@@ -56,45 +64,58 @@ export default function Menu() {
     loadUserData();
   }, []);
 
-  const fakeEvents = [
-    {
-      id: 1,
-      title: 'Multas',
-      date: '2025-12-01',
-      time: '15:00',
-      shortDate: '01/12',
-      location: 'Salão de Festas - Bloco A',
-      createdBy: 'Síndico João Silva',
-      description:
-        'Reunião para discussão sobre novas regras de multas do condomínio e revisão das penalidades existentes.',
-      fullDate: 'segunda-feira, 01 de dezembro de 2025',
-    },
-    {
-      id: 2,
-      title: 'Assembleia Geral',
-      date: '2025-12-02',
-      time: '19:30',
-      shortDate: '02/12',
-      location: 'Auditório',
-      createdBy: 'Síndico João Silva',
-      description: 'Assembleia para discutir melhorias e orçamento do próximo ano.',
-      fullDate: 'terça-feira, 02 de dezembro de 2025',
-    },
-    {
-      id: 3,
-      title: 'Manutenção Piscina',
-      date: '2025-12-03',
-      time: '10:00',
-      shortDate: '03/12',
-      location: 'Piscina',
-      createdBy: 'Equipe de Manutenção',
-      description: 'Limpeza completa e análise de PH da piscina.',
-      fullDate: 'quarta-feira, 03 de dezembro de 2025',
-    },
-  ];
+  useEffect(() => {
+    const loadEvents = async () => {
+      try {
+        setLoading(true);
+        // 1. Buscar Reuniões
+        const meetingsData = await getUpcomingMeetings();
 
-  const [selectedEvent, setSelectedEvent] = useState<EventType | null>(null);
-  const [openModal, setOpenModal] = useState(false);
+        const formattedEvents: EventType[] = meetingsData.map((meeting: any) => ({
+          id: meeting.idMeeting, // Ajustado para idMeeting
+          title: meeting.name, // Ajustado: Backend manda 'name', não 'title'
+          date: meeting.meetingDate,
+          time: meeting.meetingTime ? meeting.meetingTime.slice(0, 5) : '', // Ajustado: Corta para HH:mm
+          shortDate: meeting.meetingDate
+            ? meeting.meetingDate.split('-').slice(1).reverse().join('/')
+            : '', // Ajustado para dia/mês
+          location: meeting.location || 'Condomínio',
+          createdBy: meeting.publisherName || 'Admin', // Tenta pegar nome do criador
+          description: meeting.description || '',
+          fullDate: meeting.meetingDate || '',
+        }));
+
+        setEvents(formattedEvents);
+
+        // 2. Buscar Gastos
+        const today = new Date();
+        const currentMonth = String(today.getMonth() + 1).padStart(2, '0');
+        const currentYear = String(today.getFullYear());
+
+        const expensesData = await getExpenses(currentMonth, currentYear);
+        const formattedExpenses: ExpenseType[] = expensesData
+          .filter((expense: any) => expense.status !== 'PAID')
+          .map((expense: any) => ({
+            id: expense.idExpense,
+            name: expense.name,
+            amount: expense.amount,
+            status: expense.status,
+            dueDate: expense.expenseDate,
+          }))
+          .slice(0, 3);
+
+        setExpenses(formattedExpenses);
+      } catch (error) {
+        console.error('Erro ao buscar dados:', error);
+        setEvents([]);
+        setExpenses([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadEvents();
+  }, []);
 
   return (
     <View className="flex-1 bg-[#EFF0FB]">
@@ -106,17 +127,9 @@ export default function Menu() {
                 <User color="#FFFFFF" size={24} />
               </View>
               <View className="ml-4">
-                {/* Alterado para exibir Nome e Estrela se for Admin */}
-                <View className="flex-row items-center">
-                  <Text className="text-xl font-bold text-white">
-                    Olá {userName || name || 'Usuario'}
-                  </Text>
-                  {userRole === 'ADMIN' && (
-                    <View className="ml-2">
-                      <Star color="#FFD700" fill="#FFD700" size={20} />
-                    </View>
-                  )}
-                </View>
+                <Text className="text-xl font-bold text-white">
+                  Olá {userName || name || 'Usuario'}
+                </Text>
                 <Text className="text-xs text-gray-300">Apto 102</Text>
               </View>
             </View>
@@ -151,35 +164,53 @@ export default function Menu() {
               label="Eventos"
               onPress={() => router.push('/eventsReunion/page')}
             />
-            <RoundIconBtn
-              icon={MessageCircleQuestionMark} 
-              label="Suporte" 
-              onPress={() => router.push('/faq/page')}/>
+            <RoundIconBtn icon={MessageCircleQuestionMark} label="Suporte" />
           </ScrollView>
         </View>
 
         <InfoCard icon={Calendar} title="Eventos Próximos">
-          {fakeEvents.slice(0, 3).map((ev) => (
-            <TouchableOpacity
-              key={ev.id}
-              onPress={() => {
-                setSelectedEvent(ev);
-                setOpenModal(true);
-              }}
-              className="mt-2 flex-row items-center justify-between">
-              <Text className="text-gray-700">
-                ({ev.shortDate}) - {ev.time} - {ev.title}
-              </Text>
-
-              <Text className="font-bold text-[#131E46]">{'>'}</Text>
-            </TouchableOpacity>
-          ))}
+          {!loading && events.length > 0 ? (
+            events.slice(0, 3).map((ev) => (
+              <TouchableOpacity
+                key={ev.id}
+                onPress={() => {
+                  setSelectedEvent(ev);
+                  setOpenModal(true);
+                }}
+                className="mt-2 flex-row items-center justify-between">
+                <Text className="text-gray-700">
+                  ({ev.shortDate}) - {ev.time} - {ev.title}
+                </Text>
+                <Text className="font-bold text-[#131E46]">{'>'}</Text>
+              </TouchableOpacity>
+            ))
+          ) : (
+            <Text className="mt-2 text-gray-500">
+              {loading ? 'Carregando eventos...' : 'Nenhum evento próximo'}
+            </Text>
+          )}
         </InfoCard>
 
         <EventModal visible={openModal} event={selectedEvent} onClose={() => setOpenModal(false)} />
 
-        <InfoCard icon={HandCoins} title="Gastos do Condomínio" route="/expenses">
-          <Text className="mt-2 text-gray-500">Fatura atual: R$ 450,00</Text>
+        <InfoCard icon={HandCoins} title="Próximos Gastos Pendentes">
+          {!loading && expenses.length > 0 ? (
+            expenses.map((exp) => (
+              <TouchableOpacity
+                key={exp.id}
+                onPress={() => router.push('/gastos')}
+                className="mt-2 flex-row items-center justify-between">
+                <Text className="text-gray-700">
+                  {exp.name} - R$ {exp.amount.toFixed(2)}
+                </Text>
+                <Text className="font-bold text-[#131E46]">{'>'}</Text>
+              </TouchableOpacity>
+            ))
+          ) : (
+            <Text className="mt-2 text-gray-500">
+              {loading ? 'Carregando gastos...' : 'Nenhum gasto pendente'}
+            </Text>
+          )}
         </InfoCard>
       </ScrollView>
     </View>

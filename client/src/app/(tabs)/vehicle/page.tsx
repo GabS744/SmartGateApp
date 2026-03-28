@@ -4,7 +4,7 @@ import { View, Text, ScrollView, TouchableOpacity, Modal, Alert } from 'react-na
 import VehicleCard from '@/components/VehicleCard';
 import { Plus, Check } from 'lucide-react-native';
 import InputField from '@/components/InputField';
-import { Picker } from '@react-native-picker/picker';
+import SelectModal from '@/components/SelectModal';
 import { useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -42,6 +42,7 @@ export default function VehiclesPage() {
     nameResponsible: '',
     nameApt: '',
   });
+  const [showTypeSelect, setShowTypeSelect] = useState(false);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -106,26 +107,34 @@ export default function VehiclesPage() {
 
     setVehicles((old) => [newVehicle, ...old]);
     setOpenAdd(false);
-    setAddData({ type: 'Carro', nameVehicle: '', year: '', placa: '', cor: '', nameResponsible: '', nameApt: '' });
+    setAddData({
+      type: 'Carro',
+      nameVehicle: '',
+      year: '',
+      placa: '',
+      cor: '',
+      nameResponsible: '',
+      nameApt: '',
+    });
     setErrors({});
   };
 
   return (
-    <SafeAreaView className="flex-1 p-2 bg-white">
-
+    <SafeAreaView className="flex-1 bg-white p-2">
       <View className="flex-1 px-4 pt-4">
         <Text className="mb-1 text-3xl font-bold text-[#283B7D]">Veículos</Text>
 
         <Text className="mb-4 text-blue-400">Total: {vehicles.length}</Text>
 
-        <TouchableOpacity className="mb-5 h-[40px] w-[176px] flex-row items-center justify-center self-start rounded-xl bg-[#283B7D]" onPress={() => setOpenAdd(true)}>
+        <TouchableOpacity
+          className="mb-5 h-[40px] w-[176px] flex-row items-center justify-center self-start rounded-xl bg-[#283B7D]"
+          onPress={() => setOpenAdd(true)}>
           <Plus size={18} color="#fff" className="ml-2 mr-2" />
           <Text className="font-medium text-white"> Adicionar veículo</Text>
         </TouchableOpacity>
 
         <ScrollView
           showsVerticalScrollIndicator={false}
-
           contentContainerStyle={{ paddingBottom: 80 }}>
           {vehicles.map((v) => (
             <VehicleCard
@@ -158,62 +167,106 @@ export default function VehiclesPage() {
 
       {/* ADD VEHICLE MODAL */}
       <Modal visible={openAdd} animationType="slide" transparent>
-        <View className="flex-1 bg-black/40 justify-center items-center p-4">
-          <View className="bg-white w-full rounded-xl max-h-[87%] p-4">
-            <View className="flex-row justify-between items-center mb-4">
+        <View className="flex-1 items-center justify-center bg-black/40 p-4">
+          <View className="max-h-[87%] w-full rounded-xl bg-white p-4">
+            <View className="mb-4 flex-row items-center justify-between">
               <Text className="text-lg font-bold text-[#131E46]">Cadastrar Veículo</Text>
               <TouchableOpacity onPress={() => setOpenAdd(false)}>
-                <Text className="text-[#313E4D] font-bold">Fechar</Text>
+                <Text className="font-bold text-[#313E4D]">Fechar</Text>
               </TouchableOpacity>
             </View>
 
             <ScrollView showsVerticalScrollIndicator={false}>
               <View className="mb-4">
-                <Text className="text-gray-600 text-sm mb-1">Tipo de Veículo</Text>
-                <View className="border border-gray-300 rounded-lg">
-                  <Picker
-                    selectedValue={addData.type}
-                    onValueChange={(value) => setAddData((old) => ({ ...old, type: String(value) }))}
-                  >
-                    <Picker.Item label="Carro" value="Carro" />
-                    <Picker.Item label="Moto" value="Moto" />
-                  </Picker>
-                </View>
-                {errors.type && <Text className="text-red-500 text-xs mt-1">{errors.type}</Text>}
+                <Text className="mb-1 text-sm text-gray-600">Tipo de Veículo</Text>
+                <TouchableOpacity
+                  onPress={() => setShowTypeSelect(true)}
+                  className="w-full flex-row items-center justify-between rounded-lg border border-[#283B7D] bg-white p-4">
+                  <Text className={addData.type ? 'text-[#131E46]' : 'text-gray-400'}>
+                    {addData.type || 'Selecione'}
+                  </Text>
+                </TouchableOpacity>
+                {errors.type && <Text className="mt-1 text-xs text-red-500">{errors.type}</Text>}
               </View>
 
-              <InputField label="Nome do Veículo" value={addData.nameVehicle} onChangeText={(t) => setAddData((old) => ({ ...old, nameVehicle: t }))} />
-              {errors.nameVehicle && <Text className="text-red-500 text-xs">{errors.nameVehicle}</Text>}
+              <InputField
+                label="Nome do Veículo"
+                value={addData.nameVehicle}
+                onChangeText={(t) => setAddData((old) => ({ ...old, nameVehicle: t }))}
+              />
+              {errors.nameVehicle && (
+                <Text className="text-xs text-red-500">{errors.nameVehicle}</Text>
+              )}
 
-              <InputField label="Ano" type="number" value={addData.year} onChangeText={(t) => setAddData((old) => ({ ...old, year: t }))} />
-              {errors.year && <Text className="text-red-500 text-xs">{errors.year}</Text>}
+              <InputField
+                label="Ano"
+                type="number"
+                value={addData.year}
+                onChangeText={(t) => setAddData((old) => ({ ...old, year: t }))}
+              />
+              {errors.year && <Text className="text-xs text-red-500">{errors.year}</Text>}
 
-              <InputField label="Placa" value={addData.placa} onChangeText={(t) => setAddData((old) => ({ ...old, placa: t }))} />
-              {errors.placa && <Text className="text-red-500 text-xs">{errors.placa}</Text>}
+              <InputField
+                label="Placa"
+                value={addData.placa}
+                onChangeText={(t) => setAddData((old) => ({ ...old, placa: t }))}
+              />
+              {errors.placa && <Text className="text-xs text-red-500">{errors.placa}</Text>}
 
-              <InputField label="Cor" value={addData.cor} onChangeText={(t) => setAddData((old) => ({ ...old, cor: t }))} />
-              {errors.cor && <Text className="text-red-500 text-xs">{errors.cor}</Text>}
+              <InputField
+                label="Cor"
+                value={addData.cor}
+                onChangeText={(t) => setAddData((old) => ({ ...old, cor: t }))}
+              />
+              {errors.cor && <Text className="text-xs text-red-500">{errors.cor}</Text>}
 
-              <InputField label="Nome do responsável" value={addData.nameResponsible} onChangeText={(t) => setAddData((old) => ({ ...old, nameResponsible: t }))} />
-              {errors.nameResponsible && <Text className="text-red-500 text-xs">{errors.nameResponsible}</Text>}
+              <InputField
+                label="Nome do responsável"
+                value={addData.nameResponsible}
+                onChangeText={(t) => setAddData((old) => ({ ...old, nameResponsible: t }))}
+              />
+              {errors.nameResponsible && (
+                <Text className="text-xs text-red-500">{errors.nameResponsible}</Text>
+              )}
 
-              <InputField label="Apartamento" value={addData.nameApt} onChangeText={(t) => setAddData((old) => ({ ...old, nameApt: t }))} />
-              {errors.nameApt && <Text className="text-red-500 text-xs">{errors.nameApt}</Text>}
+              <InputField
+                label="Apartamento"
+                value={addData.nameApt}
+                onChangeText={(t) => setAddData((old) => ({ ...old, nameApt: t }))}
+              />
+              {errors.nameApt && <Text className="text-xs text-red-500">{errors.nameApt}</Text>}
 
-              <View className="flex-row justify-between mt-6">
-                <TouchableOpacity onPress={() => setOpenAdd(false)} className="px-4 py-3 rounded-lg bg-gray-200">
+              <View className="mt-6 flex-row justify-between">
+                <TouchableOpacity
+                  onPress={() => setOpenAdd(false)}
+                  className="rounded-lg bg-gray-200 px-4 py-3">
                   <Text>Cancelar</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity onPress={handleRegister} className="px-4 py-3 rounded-lg bg-[#283B7D] flex-row items-center">
+                <TouchableOpacity
+                  onPress={handleRegister}
+                  className="flex-row items-center rounded-lg bg-[#283B7D] px-4 py-3">
                   <Check size={18} color="#fff" className="mr-2" />
-                  <Text className="text-white font-medium">Registrar Veículo</Text>
+                  <Text className="font-medium text-white">Registrar Veículo</Text>
                 </TouchableOpacity>
               </View>
             </ScrollView>
           </View>
         </View>
       </Modal>
+
+      {/* Type Select Modal */}
+      <SelectModal
+        visible={showTypeSelect}
+        title="Tipo de Veículo"
+        options={[
+          { label: 'Carro', value: 'Carro' },
+          { label: 'Moto', value: 'Moto' },
+        ]}
+        selectedValue={addData.type}
+        onSelect={(value) => setAddData((old) => ({ ...old, type: value }))}
+        onClose={() => setShowTypeSelect(false)}
+      />
     </SafeAreaView>
   );
 }

@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, Modal, TouchableOpacity, ScrollView } from 'react-native';
-import { X, Calendar, Edit, Trash2 } from 'lucide-react-native';
+import { X, Calendar, Edit, Trash2, CheckCircle } from 'lucide-react-native';
 
 export interface ExpenseData {
   id: string;
@@ -18,6 +18,7 @@ interface ExpenseDetailsModalProps {
   data: ExpenseData | null;
   onEdit: (item: ExpenseData) => void;
   onDelete: (id: string) => void;
+  onMarkAsPaid?: (id: string) => void;
 }
 
 export default function ExpenseDetailsModal({
@@ -26,19 +27,20 @@ export default function ExpenseDetailsModal({
   data,
   onEdit,
   onDelete,
+  onMarkAsPaid,
 }: ExpenseDetailsModalProps) {
   if (!data) return null;
 
   const getStatusStyle = () => {
     switch (data.status) {
       case 'Pago':
-        return { bg: 'bg-green-200', text: 'text-green-800' };
+        return { bg: 'bg-green-100', text: 'text-green-800' };
       case 'Pendente':
-        return { bg: 'bg-orange-200', text: 'text-orange-800' };
+        return { bg: 'bg-yellow-100', text: 'text-yellow-800' };
       case 'Futuro':
-        return { bg: 'bg-purple-200', text: 'text-purple-800' };
+        return { bg: 'bg-blue-100', text: 'text-blue-800' };
       default:
-        return { bg: 'bg-gray-200', text: 'text-gray-800' };
+        return { bg: 'bg-gray-100', text: 'text-gray-800' };
     }
   };
 
@@ -110,6 +112,18 @@ export default function ExpenseDetailsModal({
               <Text className="ml-2 font-bold text-white">Excluir</Text>
             </TouchableOpacity>
           </View>
+
+          {data.status !== 'Pago' && onMarkAsPaid && (
+            <TouchableOpacity
+              onPress={() => {
+                onMarkAsPaid(data.id);
+                onClose();
+              }}
+              className="mt-4 w-full flex-row items-center justify-center rounded-lg bg-green-600 py-3">
+              <CheckCircle size={18} color="white" />
+              <Text className="ml-2 font-bold text-white">Marcar como Pago</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </View>
     </Modal>

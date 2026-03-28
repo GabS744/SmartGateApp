@@ -35,7 +35,7 @@ export default function ExpenseCard({
   const statusStyle = getStatusStyle();
 
   return (
-    <View className="mb-4 w-full rounded-xl border border-blue-200 bg-white p-4 shadow-sm">
+    <View className="mb-4 w-full rounded-xl border border-[#283B7D] bg-white p-4 shadow-sm">
       <View className="mb-2 flex-row items-center justify-between">
         <View className="flex-row gap-2">
           <View className="rounded-full border border-gray-400 px-3 py-1">
